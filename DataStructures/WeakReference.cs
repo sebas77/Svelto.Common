@@ -1,4 +1,6 @@
 using System;
+using Object = System.Object;
+
 /// <span class="code-SummaryComment"><summary></span>
 /// Represents a weak reference, which references an object while still allowing
 /// that object to be reclaimed by garbage collection.
@@ -11,7 +13,7 @@ namespace Svelto.DataStructures
     public class WeakReference<T>
         : WeakReference where T : class
     {
-        public bool IsValid { get { return Target != null && IsAlive == true; } }
+        public bool IsValid { get { return Object.ReferenceEquals(Target, null) == false && IsAlive == true; } }
 
         /// <span class="code-SummaryComment"><summary></span>
         /// Gets or sets the object (the target) referenced by the
@@ -53,7 +55,7 @@ namespace Svelto.DataStructures
 #else
     public class WeakReference<T> : System.WeakReference where T : class
     {
-        public bool IsValid { get { return Target != null && IsAlive == true; } }
+        public bool IsValid { get { return Object.ReferenceEquals(Target, null) == false  && IsAlive == true; } }
 
         public new T Target
         {
