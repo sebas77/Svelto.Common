@@ -71,14 +71,17 @@ namespace Svelto.WeakEvents
 
             Method = method;
 
-#if NETFX_CORE
-        var attributes = (CompilerGeneratedAttribute[])method.GetType().GetTypeInfo().GetCustomAttributes(typeof(CompilerGeneratedAttribute), false);
-        if (attributes.Length != 0)
-            throw new ArgumentException("Cannot create weak event to anonymous method with closure.");
+#if NETFX_CORE 
+            var attributes = (CompilerGeneratedAttribute[])method.GetType().GetTypeInfo().GetCustomAttributes(typeof(CompilerGeneratedAttribute), false);
+            if (attributes.Length != 0)
+                throw new ArgumentException("Cannot create weak event to anonymous method with closure.");
 #else
             if (method.DeclaringType.GetCustomAttributes(typeof(CompilerGeneratedAttribute), false).Length != 0)
                 throw new ArgumentException("Cannot create weak event to anonymous method with closure.");
 #endif
+            
+            if (method.IsStatic == true)
+                throw new ArgumentException("Cannot create weak event to a static method");
         }
 
         protected void Invoke_Internal(object[] data)

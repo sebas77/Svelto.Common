@@ -9,7 +9,7 @@ namespace Svelto.WeakEvents
         public static WeakEvent operator+(WeakEvent c1, Action x)
         {
             if (c1 == null) c1 = new WeakEvent();
-            c1._subscribers.Add(new WeakActionStruct(x));
+            c1.Add(x);
 
             return c1;
         }
@@ -17,9 +17,19 @@ namespace Svelto.WeakEvents
         public static WeakEvent operator-(WeakEvent c1, Action x)
         {
             DesignByContract.Check.Require(x != null);
-            c1.Remove(x.Target, x.GetMethodInfoEx());
+            c1.Remove(x);
 
             return c1;
+        }
+
+        public void Add(Action x)
+        {
+            _subscribers.Add(new WeakActionStruct(x));
+        }
+
+        public void Remove(Action x)
+        {
+            RemoveInternal(x.Target, x.GetMethodInfoEx());
         }
 
         public void Invoke()
@@ -29,7 +39,7 @@ namespace Svelto.WeakEvents
                     _subscribers.UnorderedRemoveAt(i--);
         }
 
-        void Remove(object thisObject, MethodInfo thisMethod)
+        void RemoveInternal(object thisObject, MethodInfo thisMethod)
         {
             for (int i = 0; i < _subscribers.Count; ++i)
             {
@@ -58,7 +68,7 @@ namespace Svelto.WeakEvents
         public static WeakEvent<T1> operator+(WeakEvent<T1> c1, Action<T1> x)
         {
             if (c1 == null) c1 = new WeakEvent<T1>();
-            c1._subscribers.Add(new WeakActionStruct<T1>(x));
+            c1.Add(x);
 
             return c1;
         }
@@ -66,9 +76,19 @@ namespace Svelto.WeakEvents
         public static WeakEvent<T1> operator-(WeakEvent<T1> c1, Action<T1> x)
         {
             DesignByContract.Check.Require(x != null);
-            c1.Remove(x.Target, x.GetMethodInfoEx());
+            c1.Remove(x);
 
             return c1;
+        }
+
+        public void Add(Action<T1> x)
+        {
+            _subscribers.Add(new WeakActionStruct<T1>(x));
+        }
+
+        public void Remove(Action<T1> x)
+        {
+            RemoveInternal(x.Target, x.GetMethodInfoEx());
         }
 
         public void Invoke(T1 arg1)
@@ -80,7 +100,7 @@ namespace Svelto.WeakEvents
                     _subscribers.UnorderedRemoveAt(i--);
         }
 
-        void Remove(object thisObject, MethodInfo thisMethod)
+        void RemoveInternal(object thisObject, MethodInfo thisMethod)
         {
             for (int i = 0; i < _subscribers.Count; ++i)
             {
@@ -119,9 +139,19 @@ namespace Svelto.WeakEvents
         public static WeakEvent<T1, T2> operator-(WeakEvent<T1, T2> c1, Action<T1, T2> x)
         {
             DesignByContract.Check.Require(x != null);
-            c1.Remove(x.Target, x.GetMethodInfoEx());
+            c1.Remove(x);
 
             return c1;
+        }
+
+        public void Add(Action<T1, T2> x)
+        {
+            _subscribers.Add(new WeakActionStruct<T1, T2>(x));
+        }
+
+        public void Remove(Action<T1, T2> x)
+        {
+            RemoveInternal(x.Target, x.GetMethodInfoEx());
         }
 
         public void Invoke(T1 arg1, T2 arg2)
@@ -134,7 +164,7 @@ namespace Svelto.WeakEvents
                     _subscribers.UnorderedRemoveAt(i--);
         }
 
-        void Remove(object thisObject, MethodInfo thisMethod)
+        void RemoveInternal(object thisObject, MethodInfo thisMethod)
         {
             for (int i = 0; i < _subscribers.Count; ++i)
             {
