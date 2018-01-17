@@ -128,12 +128,9 @@ namespace Svelto.DataStructures
         public FasterReadOnlyList(FasterList<T> list)
         {
             _list = list;
-
-            int count;
-            _buffer = FasterList<T>.NoVirt.ToArrayFast(list, out count);
         }
 
-        public T this[int index] { get { return _buffer[index]; } set { throw new NotImplementedException(); } }
+        public T this[int index] { get { return _list[index]; } set { throw new NotImplementedException(); } }
 
         public FasterListEnumerator<T> GetEnumerator()
         {
@@ -191,7 +188,6 @@ namespace Svelto.DataStructures
         }
 
         readonly FasterList<T> _list;
-        private readonly T[] _buffer;
     }
 
     public struct FasterListThreadSafe<T> : IList<T>
@@ -830,6 +826,11 @@ namespace Svelto.DataStructures
             {
                 count = fasterList._count;
                 
+                return fasterList._buffer;
+            }
+            
+            internal static T[] ToArrayFast(FasterList<T> fasterList)
+            {
                 return fasterList._buffer;
             }
         }
