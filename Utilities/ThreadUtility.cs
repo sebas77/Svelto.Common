@@ -24,6 +24,17 @@ namespace Svelto.Utilities
             Thread.Sleep(0);
             #endif    
         }
+        
+        public static void SleepZero()
+        {
+#if NETFX_CORE            
+            Task.Yield();
+#elif NET_4_6
+            Thread.Sleep(0); 
+#else
+            Thread.Sleep(0);
+            #endif    
+        }
     }
 #if NETFX_CORE || NET_4_6
     public sealed class ManualResetEventEx : ManualResetEventSlim
