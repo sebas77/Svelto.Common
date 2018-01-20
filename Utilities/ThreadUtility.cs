@@ -30,17 +30,6 @@ namespace Svelto.Utilities
 #if NETFX_CORE            
             Task.Yield();
 #elif NET_4_6
-            Thread.Sleep(0);
-#else
-            Thread.Sleep(0);
-#endif    
-        }
-        
-        public static void SleepZero()
-        {
-#if NETFX_CORE            
-            Task.Yield();
-#elif NET_4_6
             Thread.Sleep(0); 
 #else
             Thread.Sleep(0);
