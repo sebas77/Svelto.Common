@@ -1,5 +1,8 @@
-using System.Threading;
 using UnityEngine;
+#if NETFX_CORE
+using System.Threading.Tasks;
+#endif
+using System.Threading;
 
 namespace Svelto.Utilities
 {
