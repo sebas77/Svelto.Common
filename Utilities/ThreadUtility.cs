@@ -22,7 +22,18 @@ namespace Svelto.Utilities
             Thread.Yield(); 
 #else
             Thread.Sleep(0);
-            #endif    
+#endif    
+        }
+        
+        public static void SleepZero()
+        {
+#if NETFX_CORE            
+            Task.Yield();
+#elif NET_4_6
+            Thread.Sleep(0);
+#else
+            Thread.Sleep(0);
+#endif    
         }
         
         public static void SleepZero()
@@ -60,9 +71,29 @@ namespace Svelto.Utilities
         }
     }
 #else
-    public class ManualResetEventEx : ManualResetEvent
+    public class ManualResetEventEx
     {
+        ManualResetEvent _manualReset = new ManualResetEvent(false);
         
+        public void Wait()
+        {
+            _manualReset.WaitOne();
+        }
+
+        public void Reset()
+        {
+            _manualReset.Reset();
+        }
+
+        public void Set()
+        {
+            _manualReset.Set();
+        }
+
+        public void Dispose()
+        {
+            _manualReset.Close();
+        }
     }
 #endif
 }
