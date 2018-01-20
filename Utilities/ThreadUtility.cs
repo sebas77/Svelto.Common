@@ -49,9 +49,29 @@ namespace Svelto.Utilities
         }
     }
 #else
-    public class ManualResetEventEx : ManualResetEvent
+    public class ManualResetEventEx
     {
+        ManualResetEvent _manualReset = new ManualResetEvent();
         
+        public void Wait()
+        {
+            _manualReset.WaitOne();
+        }
+
+        public void Reset()
+        {
+            _manualReset.Reset();
+        }
+
+        public void Set()
+        {
+            _manualReset.Set();
+        }
+
+        public void Dispose()
+        {
+            _manualReset.Close();
+        }
     }
 #endif
 }
