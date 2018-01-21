@@ -1,6 +1,7 @@
 
 using System.Collections.Generic;
 using System.Threading;
+using Svelto.Tasks.Profiler;
 
 namespace Svelto.DataStructures
 {
@@ -194,6 +195,19 @@ namespace Svelto.DataStructures
                 LockQ.ExitWriteLock();
             }
         }
+        
+        public virtual void Add(TKey key, ref TValue value)
+        {
+            LockQ.EnterWriteLock();
+            try
+            {
+                dict.Add(key, value);
+            }
+            finally
+            {
+                LockQ.ExitWriteLock();
+            }
+        }
 
         public virtual bool ContainsKey(TKey key)
         {
@@ -286,5 +300,18 @@ namespace Svelto.DataStructures
         readonly IDictionary<TKey, TValue> dict;
 
         readonly ReaderWriterLockSlim LockQ = new ReaderWriterLockSlim();
+
+        public void Update(TKey key, ref TValue value)
+        {
+            LockQ.EnterWriteLock();
+            try
+            {
+                dict[key] = value;
+            }
+            finally
+            {
+                LockQ.ExitWriteLock();
+            }
+        }
     }
 }
