@@ -1,3 +1,4 @@
+using System;
 using System.Security.Cryptography;
 using UnityEngine;
 #if NETFX_CORE
@@ -17,15 +18,19 @@ namespace Svelto.Utilities
             Thread.MemoryBarrier();
 #endif
         }
-
-        public static void Yield()
+#if NETFX_CORE
+        public static async Task
+#else
+        public static void
+#endif        
+        Yield()
         {
-#if NETFX_CORE            
-            Task.Yield();
-#elif NET_4_6
+#if NETFX_CORE && !NET_STANDARD_2_0            
+            throw new NotImplementedException();
+#elif NET_4_6 || NET_STANDARD_2_0
             Thread.Yield(); 
 #else
-            Thread.Sleep(0);
+            Thread.Sleep(0); 
 #endif    
         }
     }
@@ -35,6 +40,11 @@ namespace Svelto.Utilities
         public new void Wait()
         {
             base.Wait();
+        }
+
+        public new void Wait(int ms)
+        {
+            base.Wait(ms);
         }
 
         public new void Reset()
@@ -60,6 +70,11 @@ namespace Svelto.Utilities
         public void Wait()
         {
             _manualReset.WaitOne();
+        }
+
+        public void Wait(int ms)
+        {
+            _manualReset.WaitOne(ms);
         }
 
         public void Reset()
