@@ -19,7 +19,7 @@ namespace Svelto.Utilities
 
             throw new ArgumentException("<color=orange>Svelto.ECS</color> unsupported field (must be an interface and a class)");
         }
-#elif !NETFX_CORE && !NET_STANDARD_2_0 && !UNITY_WSA_10_0
+#elif !NETFX_CORE && !NET_STANDARD_2_0 && !UNITY_WSA_10_0 && !NETSTANDARD2_0
         public static CastedAction<CastedType> MakeSetter<CastedType>(FieldInfo field) where CastedType:class
         {
             if (field.FieldType.IsInterfaceEx() == true && field.FieldType.IsValueTypeEx() == false)

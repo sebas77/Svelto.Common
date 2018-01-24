@@ -1,6 +1,3 @@
-using System;
-using System.Security.Cryptography;
-using UnityEngine;
 #if NETFX_CORE
 using System.Threading.Tasks;
 #endif
@@ -25,12 +22,12 @@ namespace Svelto.Utilities
 #endif        
         Yield()
         {
-#if NETFX_CORE && !NET_STANDARD_2_0            
+#if NETFX_CORE && !NET_STANDARD_2_0 && !NETSTANDARD2_0
             //goddamit GIT I rewrote this 
             //comment three times, when will you decide
             //to freaking push it?!?!
             //NO WAY TO YIELD IN NET CORE 1.1
-#elif NET_4_6 || NET_STANDARD_2_0
+#elif NET_4_6 || NET_STANDARD_2_0 || NETSTANDARD2_0
             Thread.Yield(); 
 #else
             Thread.Sleep(0); 
