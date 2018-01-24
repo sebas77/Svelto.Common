@@ -26,7 +26,10 @@ namespace Svelto.Utilities
         Yield()
         {
 #if NETFX_CORE && !NET_STANDARD_2_0            
-            throw new NotImplementedException();
+            //goddamit GIT I rewrote this 
+            //comment three times, when will you decide
+            //to freaking push it?!?!
+            //NO WAY TO YIELD IN NET CORE 1.1
 #elif NET_4_6 || NET_STANDARD_2_0
             Thread.Yield(); 
 #else
