@@ -1,7 +1,5 @@
-
 using System.Collections.Generic;
 using System.Threading;
-using Svelto.Tasks.Profiler;
 
 namespace Svelto.DataStructures
 {
