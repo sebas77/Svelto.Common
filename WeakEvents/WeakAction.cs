@@ -53,8 +53,8 @@ namespace Svelto.WeakEvents
 
     public abstract class WeakActionBase
     {
-        protected readonly DataStructures.WeakReference<object> objectRef;
-        protected readonly MethodInfo method;
+        readonly DataStructures.WeakReference<object> objectRef;
+        readonly MethodInfo method;
 
         public bool IsValid
         {
@@ -88,7 +88,17 @@ namespace Svelto.WeakEvents
         {
             if (objectRef.IsValid)
             {
-                method.Invoke(objectRef.Target, data);
+                try
+                {
+                    method.Invoke(objectRef.Target, data);
+                }
+                catch (Exception e)
+                {
+                    if (e.InnerException != null)
+                        throw e.InnerException;
+
+                    throw;
+                }
 
                 return true;
             }
