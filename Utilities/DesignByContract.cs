@@ -56,13 +56,14 @@ namespace DesignByContract
 	/// is possible.)
 	/// </remarks>
 	/// 
-	public sealed class Check
+	sealed class Check
 	{
 		#region Interface
 
 		/// <summary>
 		/// Precondition check.
 		/// </summary>
+		[Conditional("DBC_CHECK_ALL")]
 		public static void Require(bool assertion, string message)
 		{
 #if DBC_CHECK_ALL				
@@ -81,6 +82,8 @@ namespace DesignByContract
 		/// <summary>
 		/// Precondition check.
 		/// </summary>
+		/// 
+		[Conditional("DBC_CHECK_ALL")]
 		public static void Require(bool assertion, string message, Exception inner)
 		{
 #if DBC_CHECK_ALL				
@@ -99,6 +102,8 @@ namespace DesignByContract
 		/// <summary>
 		/// Precondition check.
 		/// </summary>
+		/// 
+		[Conditional("DBC_CHECK_ALL")]
 		public static void Require(bool assertion)
 		{
 #if DBC_CHECK_ALL				
@@ -117,6 +122,8 @@ namespace DesignByContract
 		/// <summary>
 		/// Postcondition check.
 		/// </summary>
+		/// 
+		[Conditional("DBC_CHECK_ALL")]
 		public static void Ensure(bool assertion, string message)
 		{
 #if DBC_CHECK_ALL				
@@ -135,6 +142,8 @@ namespace DesignByContract
 		/// <summary>
 		/// Postcondition check.
 		/// </summary>
+		/// 
+		[Conditional("DBC_CHECK_ALL")]
 		public static void Ensure(bool assertion, string message, Exception inner)
 		{
 #if DBC_CHECK_ALL				
@@ -153,6 +162,8 @@ namespace DesignByContract
 		/// <summary>
 		/// Postcondition check.
 		/// </summary>
+		/// 
+		[Conditional("DBC_CHECK_ALL")]
 		public static void Ensure(bool assertion)
 		{
 #if DBC_CHECK_ALL				
@@ -171,6 +182,8 @@ namespace DesignByContract
 		/// <summary>
 		/// Invariant check.
 		/// </summary>
+		/// 
+		[Conditional("DBC_CHECK_ALL")]
 		public static void Invariant(bool assertion, string message)
 		{
 #if DBC_CHECK_ALL				
@@ -189,6 +202,8 @@ namespace DesignByContract
 		/// <summary>
 		/// Invariant check.
 		/// </summary>
+		/// 
+		[Conditional("DBC_CHECK_ALL")]
 		public static void Invariant(bool assertion, string message, Exception inner)
 		{
 #if DBC_CHECK_ALL				
@@ -207,6 +222,8 @@ namespace DesignByContract
 		/// <summary>
 		/// Invariant check.
 		/// </summary>
+		/// 
+		[Conditional("DBC_CHECK_ALL")]
 		public static void Invariant(bool assertion)
 		{
 #if DBC_CHECK_ALL				
@@ -225,6 +242,7 @@ namespace DesignByContract
 		/// <summary>
 		/// Assertion check.
 		/// </summary>
+		[Conditional("DBC_CHECK_ALL")]
 		public static void Assert(bool assertion, string message)
 		{
 #if DBC_CHECK_ALL			
@@ -243,6 +261,8 @@ namespace DesignByContract
 		/// <summary>
 		/// Assertion check.
 		/// </summary>
+		/// 
+		[Conditional("DBC_CHECK_ALL")]
 		public static void Assert(bool assertion, string message, Exception inner)
 		{
 #if DBC_CHECK_ALL				
@@ -261,6 +281,8 @@ namespace DesignByContract
 		/// <summary>
 		/// Assertion check.
 		/// </summary>
+		/// 
+		[Conditional("DBC_CHECK_ALL")]
 		public static void Assert(bool assertion)
 		{
 #if DBC_CHECK_ALL			
