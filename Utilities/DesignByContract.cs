@@ -1,13 +1,11 @@
-#define DBC_CHECK_ALL
-
 #if PROFILER
-#undef DBC_CHECK_ALL
+#undef DEBUG
 #endif
 
 using System;
 using System.Diagnostics;
 
-namespace DesignByContract
+namespace DBC
 {
 	/// <summary>
 	/// Design By Contract Checks.
@@ -56,17 +54,16 @@ namespace DesignByContract
 	/// is possible.)
 	/// </remarks>
 	/// 
-	sealed class Check
+	static class Check
 	{
 		#region Interface
 
 		/// <summary>
 		/// Precondition check.
 		/// </summary>
-		[Conditional("DBC_CHECK_ALL")]
+		[Conditional("DEBUG")]
 		public static void Require(bool assertion, string message)
 		{
-#if DBC_CHECK_ALL				
 			if (UseExceptions) 
 			{
 				if (!assertion)	
@@ -76,17 +73,15 @@ namespace DesignByContract
 			{
 				Trace.Assert(assertion, "Precondition: " + message);
 			}
-#endif			
 		}
 
 		/// <summary>
 		/// Precondition check.
 		/// </summary>
 		/// 
-		[Conditional("DBC_CHECK_ALL")]
+		[Conditional("DEBUG")]
 		public static void Require(bool assertion, string message, Exception inner)
 		{
-#if DBC_CHECK_ALL				
 			if (UseExceptions) 
 			{
 				if (!assertion)	
@@ -96,17 +91,15 @@ namespace DesignByContract
 			{
 				Trace.Assert(assertion, "Precondition: " + message);
 			}
-#endif			
 		}
 
 		/// <summary>
 		/// Precondition check.
 		/// </summary>
 		/// 
-		[Conditional("DBC_CHECK_ALL")]
+		[Conditional("DEBUG")]
 		public static void Require(bool assertion)
 		{
-#if DBC_CHECK_ALL				
 			if (UseExceptions) 
 			{
 				if (!assertion)
@@ -116,17 +109,15 @@ namespace DesignByContract
 			{
 				Trace.Assert(assertion, "Precondition failed.");
 			}
-#endif			
 		}
 		
 		/// <summary>
 		/// Postcondition check.
 		/// </summary>
 		/// 
-		[Conditional("DBC_CHECK_ALL")]
+		[Conditional("DEBUG")]
 		public static void Ensure(bool assertion, string message)
 		{
-#if DBC_CHECK_ALL				
 			if (UseExceptions) 
 			{
 				if (!assertion)	
@@ -136,17 +127,15 @@ namespace DesignByContract
 			{
 				Trace.Assert(assertion, "Postcondition: " + message);
 			}
-#endif			
 		}
 
 		/// <summary>
 		/// Postcondition check.
 		/// </summary>
 		/// 
-		[Conditional("DBC_CHECK_ALL")]
+		[Conditional("DEBUG")]
 		public static void Ensure(bool assertion, string message, Exception inner)
 		{
-#if DBC_CHECK_ALL				
 			if (UseExceptions) 
 			{
 				if (!assertion)	
@@ -156,17 +145,15 @@ namespace DesignByContract
 			{
 				Trace.Assert(assertion, "Postcondition: " + message);
 			}
-#endif			
 		}
 
 		/// <summary>
 		/// Postcondition check.
 		/// </summary>
 		/// 
-		[Conditional("DBC_CHECK_ALL")]
+		[Conditional("DEBUG")]
 		public static void Ensure(bool assertion)
 		{
-#if DBC_CHECK_ALL				
 			if (UseExceptions) 
 			{
 				if (!assertion)	
@@ -176,17 +163,15 @@ namespace DesignByContract
 			{
 				Trace.Assert(assertion, "Postcondition failed.");
 			}
-#endif			
 		}
 		
 		/// <summary>
 		/// Invariant check.
 		/// </summary>
 		/// 
-		[Conditional("DBC_CHECK_ALL")]
+		[Conditional("DEBUG")]
 		public static void Invariant(bool assertion, string message)
 		{
-#if DBC_CHECK_ALL				
 			if (UseExceptions) 
 			{
 				if (!assertion)	
@@ -196,17 +181,15 @@ namespace DesignByContract
 			{
 				Trace.Assert(assertion, "Invariant: " + message);
 			}
-#endif			
 		}
 
 		/// <summary>
 		/// Invariant check.
 		/// </summary>
 		/// 
-		[Conditional("DBC_CHECK_ALL")]
+		[Conditional("DEBUG")]
 		public static void Invariant(bool assertion, string message, Exception inner)
 		{
-#if DBC_CHECK_ALL				
 			if (UseExceptions) 
 			{
 				if (!assertion)	
@@ -216,17 +199,15 @@ namespace DesignByContract
 			{
 				Trace.Assert(assertion, "Invariant: " + message);
 			}
-#endif			
 		}
 
 		/// <summary>
 		/// Invariant check.
 		/// </summary>
 		/// 
-		[Conditional("DBC_CHECK_ALL")]
+		[Conditional("DEBUG")]
 		public static void Invariant(bool assertion)
 		{
-#if DBC_CHECK_ALL				
 			if (UseExceptions) 
 			{
 				if (!assertion)	
@@ -236,16 +217,14 @@ namespace DesignByContract
 			{
 				Trace.Assert(assertion, "Invariant failed.");
 			}
-#endif			
 		}
 
 		/// <summary>
 		/// Assertion check.
 		/// </summary>
-		[Conditional("DBC_CHECK_ALL")]
+		[Conditional("DEBUG")]
 		public static void Assert(bool assertion, string message)
 		{
-#if DBC_CHECK_ALL			
 			if (UseExceptions) 
 			{
 				if (!assertion)	
@@ -255,17 +234,15 @@ namespace DesignByContract
 			{
 				Trace.Assert(assertion, "Assertion: " + message);
 			}
-#endif			
 		}
 
 		/// <summary>
 		/// Assertion check.
 		/// </summary>
 		/// 
-		[Conditional("DBC_CHECK_ALL")]
+		[Conditional("DEBUG")]
 		public static void Assert(bool assertion, string message, Exception inner)
 		{
-#if DBC_CHECK_ALL				
 			if (UseExceptions) 
 			{
 				if (!assertion)	
@@ -275,17 +252,15 @@ namespace DesignByContract
 			{
 				Trace.Assert(assertion, "Assertion: " + message);
 			}
-#endif			
 		}
 
 		/// <summary>
 		/// Assertion check.
 		/// </summary>
 		/// 
-		[Conditional("DBC_CHECK_ALL")]
+		[Conditional("DEBUG")]
 		public static void Assert(bool assertion)
 		{
-#if DBC_CHECK_ALL			
 			if (UseExceptions) 
 			{
 				if (!assertion)
@@ -295,7 +270,6 @@ namespace DesignByContract
 			{
 				Trace.Assert(assertion, "Assertion failed.");
 			}
-#endif			
 		}
 
 		/// <summary>
@@ -321,7 +295,6 @@ namespace DesignByContract
 		#region Implementation
 
 		// No creation
-		private Check() {}
 
 		/// <summary>
 		/// Is exception handling being used?

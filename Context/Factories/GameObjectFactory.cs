@@ -13,7 +13,7 @@ namespace Svelto.Context
 
         public GameObject Build(string prefabName)
         {
-            DesignByContract.Check.Require(_prefabs.ContainsKey(prefabName), "Svelto.Factories.IGameObjectFactory -prefab was not found:" + prefabName);
+            DBC.Check.Require(_prefabs.ContainsKey(prefabName), "Svelto.Factories.IGameObjectFactory -prefab was not found:" + prefabName);
 
             var go = Build(_prefabs[prefabName][0]);
 
