@@ -15,25 +15,19 @@ namespace Svelto.Utilities
             Thread.MemoryBarrier();
 #endif
         }
-#if NETFX_CORE
-        public static async Task
-#else
-        public static void
-#endif        
-        Yield()
+
+        public static void Yield()
         {
 #if NETFX_CORE && !NET_STANDARD_2_0 && !NETSTANDARD2_0
-            //goddamit GIT I rewrote this 
-            //comment three times, when will you decide
-            //to freaking push it?!?!
-            //NO WAY TO YIELD IN NET CORE 1.1
+            Task.Yield().Wait();
 #elif NET_4_6 || NET_STANDARD_2_0 || NETSTANDARD2_0
             Thread.Yield(); 
 #else
             Thread.Sleep(0); 
-#endif    
+#endif
         }
     }
+
 #if NETFX_CORE || NET_4_6
     public sealed class ManualResetEventEx : ManualResetEventSlim
     {
