@@ -1,3 +1,5 @@
+
+using System;
 #if NETFX_CORE
 using System.Threading.Tasks;
 #endif
@@ -15,11 +17,13 @@ namespace Svelto.Utilities
             Thread.MemoryBarrier();
 #endif
         }
-
+#if NETFX_CORE && !NET_STANDARD_2_0 && !NETSTANDARD2_0
+        static TimeSpan wait = TimeSpan.FromMilliseconds(0.01);
+#endif
         public static void Yield()
         {
 #if NETFX_CORE && !NET_STANDARD_2_0 && !NETSTANDARD2_0
-            Task.Yield().Wait();
+            Task.Delay(wait).Wait();
 #elif NET_4_6 || NET_STANDARD_2_0 || NETSTANDARD2_0
             Thread.Yield(); 
 #else
