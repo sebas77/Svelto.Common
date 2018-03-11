@@ -18,7 +18,7 @@ namespace Svelto.Utilities
 #endif
         }
 #if NETFX_CORE && !NET_STANDARD_2_0 && !NETSTANDARD2_0
-        static TimeSpan wait = TimeSpan.FromMilliseconds(0.01);
+        static TimeSpan wait = TimeSpan.FromMilliseconds(0.1);
 #endif
         public static void Yield()
         {
@@ -33,11 +33,11 @@ namespace Svelto.Utilities
 
         public static void TakeItEasy()
         {
-            #if NETFX_CORE && !NET_STANDARD_2_0 && !NETSTANDARD2_0
-                        Task.Delay(1).Wait();
-            #elif NET_4_6 || NET_STANDARD_2_0 || NETSTANDARD2_0
-                        Thread.Sleep(1); 
-            #endif
+#if NETFX_CORE && !NET_STANDARD_2_0 && !NETSTANDARD2_0
+            Task.Delay(1).Wait();
+#elif NET_4_6 || NET_STANDARD_2_0 || NETSTANDARD2_0
+            Thread.Sleep(1); 
+#endif
         }
     }
 
