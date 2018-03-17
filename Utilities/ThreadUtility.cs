@@ -21,7 +21,7 @@ namespace Svelto.Utilities
         public static void Yield()
         {
 #if NETFX_CORE && !NET_STANDARD_2_0 && !NETSTANDARD2_0
-            throw new Exception("Svelto doesn't support UWP .NET anymore, please use UWP IL2CPP")
+            throw new Exception("Svelto doesn't support UWP without NET_STANDARD_2_0 support")
 #elif NET_4_6 || NET_STANDARD_2_0 || NETSTANDARD2_0
             Thread.Yield(); 
 #else
@@ -32,7 +32,7 @@ namespace Svelto.Utilities
         public static void TakeItEasy()
         {
 #if NETFX_CORE && !NET_STANDARD_2_0 && !NETSTANDARD2_0
-            throw new Exception("Svelto doesn't support UWP .NET anymore, please use UWP IL2CPP")
+            throw new Exception("Svelto doesn't support UWP without NET_STANDARD_2_0 support")
 #elif NET_4_6 || NET_STANDARD_2_0 || NETSTANDARD2_0
             Thread.Sleep(1); 
 #endif
