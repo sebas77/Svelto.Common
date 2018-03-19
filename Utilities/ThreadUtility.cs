@@ -17,6 +17,7 @@ namespace Svelto.Utilities
 #endif
         }
 
+
         public static void Yield()
         {
 #if NETFX_CORE && !NET_STANDARD_2_0 && !NETSTANDARD2_0
