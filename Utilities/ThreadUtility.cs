@@ -1,4 +1,3 @@
-
 using System;
 #if NETFX_CORE
 using System.Threading.Tasks;
@@ -17,13 +16,11 @@ namespace Svelto.Utilities
             Thread.MemoryBarrier();
 #endif
         }
-#if NETFX_CORE && !NET_STANDARD_2_0 && !NETSTANDARD2_0
-        static TimeSpan wait = TimeSpan.FromMilliseconds(0.1);
-#endif
+
         public static void Yield()
         {
 #if NETFX_CORE && !NET_STANDARD_2_0 && !NETSTANDARD2_0
-            Task.Delay(wait).Wait();
+            throw new Exception("Svelto doesn't support UWP without NET_STANDARD_2_0 support");
 #elif NET_4_6 || NET_STANDARD_2_0 || NETSTANDARD2_0
             Thread.Yield(); 
 #else
@@ -34,7 +31,7 @@ namespace Svelto.Utilities
         public static void TakeItEasy()
         {
 #if NETFX_CORE && !NET_STANDARD_2_0 && !NETSTANDARD2_0
-            Task.Delay(1).Wait();
+            throw new Exception("Svelto doesn't support UWP without NET_STANDARD_2_0 support");
 #elif NET_4_6 || NET_STANDARD_2_0 || NETSTANDARD2_0
             Thread.Sleep(1); 
 #endif

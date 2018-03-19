@@ -126,10 +126,11 @@ namespace Utility
             {
 #if NETFX_CORE
                 string currentTimeString = DateTime.UtcNow.ToString("dd/mm/yy hh:ii:ss");
-                string processTimeString = (DateTime.UtcNow - ProcessDiagnosticInfo.GetForCurrentProcess().ProcessStartTime.DateTime).ToString();
+                string processTimeString = (DateTime.UtcNow - ProcessDiagnosticInfo.
+                                                GetForCurrentProcess().ProcessStartTime.DateTime.ToUniversalTime()).ToString();
 #else
                 string currentTimeString = DateTime.UtcNow.ToLongTimeString(); //ensure includes seconds
-                string processTimeString = (DateTime.Now - Process.GetCurrentProcess().StartTime).ToString();
+                string processTimeString = (DateTime.UtcNow - Process.GetCurrentProcess().StartTime.ToUniversalTime()).ToString();
 #endif
 
                 _stringBuilder.Length = 0;
