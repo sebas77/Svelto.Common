@@ -466,10 +466,7 @@ namespace Svelto.DataStructures
         readonly FasterList<T> _list;
     }
 
-    public interface IFasterList
-    {}
-
-    public class FasterList<T> : IList<T>, IFasterList
+    public class FasterList<T> : IList<T>
     {
         public static readonly FasterList<T> DefaultList = new FasterList<T>();
         
@@ -485,14 +482,7 @@ namespace Svelto.DataStructures
             get { return false; }
         }
 
-        public FasterList()
-        {
-            _count = 0;
-
-            _buffer = new T[MIN_SIZE];
-        }
-
-        public FasterList(int initialSize)
+        public FasterList(int initialSize = MIN_SIZE)
         {
             _count = 0;
 
@@ -833,6 +823,11 @@ namespace Svelto.DataStructures
             {
                 return fasterList._buffer;
             }
+        }
+
+        public void UnorderedRemoveRange(int groupStart, int groupEnd)
+        {
+            Array.Copy(_buffer, groupEnd, _buffer, groupStart, groupEnd - groupStart);
         }
     }
 }
