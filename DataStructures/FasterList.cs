@@ -470,7 +470,7 @@ namespace Svelto.DataStructures
     {
         public static readonly FasterList<T> DefaultList = new FasterList<T>();
         
-        const int MIN_SIZE = 4;
+        const int MIN_SIZE = 0;
 
         public int Count
         {
@@ -480,6 +480,13 @@ namespace Svelto.DataStructures
         public bool IsReadOnly
         {
             get { return false; }
+        }
+        
+        public FasterList()
+        {
+            _count = 0;
+
+            _buffer = new T[MIN_SIZE];
         }
 
         public FasterList(int initialSize = MIN_SIZE)
@@ -557,7 +564,7 @@ namespace Svelto.DataStructures
 
         public void AddRange(IEnumerator<T> items, int count)
         {
-            if (_count + count >= _buffer.Length)
+            if (_count + count > _buffer.Length)
                 AllocateMore(_count + count);
 
             while (items.MoveNext())
@@ -578,7 +585,7 @@ namespace Svelto.DataStructures
         {
             if (count == 0) return;
 
-            if (_count + count >= _buffer.Length)
+            if (_count + count > _buffer.Length)
                 AllocateMore(_count + count);
 
             Array.Copy(items, 0, _buffer, _count, count);
@@ -691,22 +698,16 @@ namespace Svelto.DataStructures
             _count = newSize;
         }
 
-        public void SetAt(int index, T value)
-        {
-            if (index >= _buffer.Length)
-                AllocateMore(index + 1);
-
-            if (_count <= index)
-                _count = index + 1;
-
-            this[index] = value;
-        }
-
         public void Sort(IComparer<T> comparer)
         {
             Array.Sort(_buffer, 0, _count, comparer);
         }
-
+        
+        public void Sort()
+        {
+            Array.Sort(_buffer, 0, _count, Comparer<T>.Default);
+        }
+        
         public T[] ToArray()
         {
             T[] destinationArray = new T[_count];
@@ -766,19 +767,20 @@ namespace Svelto.DataStructures
 
         void AllocateMore()
         {
-            var newList = new T[Math.Max(_buffer.Length << 1, MIN_SIZE)];
+            var newList = new T[(_buffer.Length + 1) << 1];
             if (_count > 0) _buffer.CopyTo(newList, 0);
             _buffer = newList;
         }
 
         void AllocateMore(int newSize)
         {
-            var oldLength = Math.Max(_buffer.Length, MIN_SIZE);
+            DBC.Check.Require(newSize > _buffer.Length);
+            var newLength = Math.Max(_buffer.Length, 1);
 
-            while (oldLength < newSize)
-                oldLength <<= 1;
+            while (newLength < newSize)
+                newLength <<= 1;
 
-            var newList = new T[oldLength];
+            var newList = new T[newLength];
             if (_count > 0) Array.Copy(_buffer, newList, _count);
             _buffer = newList;
         }
