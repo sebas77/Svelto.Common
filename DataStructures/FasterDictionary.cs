@@ -37,8 +37,15 @@ namespace Svelto.DataStructures
             }
         }
 
-        public ICollection<W> Values => new ReadOnlyCollectionStruct<W>(_values, _count);
-        public ReadOnlyCollectionStruct<W> FasterValues => new ReadOnlyCollectionStruct<W>(_values, _count);
+        public ICollection<W> Values
+        {
+            get { return new ReadOnlyCollectionStruct<W>(_values, _count); }
+        }
+
+        public ReadOnlyCollectionStruct<W> FasterValues
+        {
+            get { return new ReadOnlyCollectionStruct<W>(_values, _count); }
+        }
 
         public W[] GetFasterValuesBuffer(out int count)
         {
@@ -474,8 +481,12 @@ namespace Svelto.DataStructures
         
         T[] _values;
         int _count;
-        
-        
+
+
+        public T this[int i]
+        {
+            get { return _values[i]; }
+        }
     }
 }
 
