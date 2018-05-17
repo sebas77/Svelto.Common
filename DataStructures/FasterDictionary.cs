@@ -53,6 +53,11 @@ namespace Svelto.DataStructures
 
             return _values;
         }
+        
+        public W[] GetFasterValuesBuffer()
+        {
+            return _values;
+        }
 
         public int Count
         {
@@ -110,6 +115,11 @@ namespace Svelto.DataStructures
         public bool Remove(KeyValuePair<T, W> item)
         {
             throw new NotImplementedException();
+        }
+        
+        protected uint GetValueIndex(T index)
+        {
+            return GetIndex(index, _buckets, _valuesInfo);
         }
 
         public bool TryGetValue(T key, out W value)
