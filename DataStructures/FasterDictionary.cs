@@ -8,13 +8,6 @@ namespace Svelto.DataStructures
     //totally WIP so internal atm
     class FasterDictionary<T, W> : IDictionary<T, W> where T : IComparable<T>
     {
-        Node[] _valuesInfo;
-        int[] _buckets;
-        W[] _values;
-        int _freeValueCellIndex;
-        int _count;
-        int _collisions;
-
         protected FasterDictionary(int size)
         {
             _valuesInfo = new Node[size];
@@ -99,7 +92,13 @@ namespace Svelto.DataStructures
 
         public bool ContainsKey(T key)
         {
-            throw new NotImplementedException();
+            uint findIndex;
+            if (FindIndex(key, _buckets, _valuesInfo, out findIndex))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         public void CopyTo(KeyValuePair<T, W>[] array, int arrayIndex)
@@ -325,8 +324,8 @@ namespace Svelto.DataStructures
                 //for some reason this is way faster they use Comparer<T>.default, should investigate
                 if (valuesInfo[valueIndex].hashcode == hash && valuesInfo[valueIndex].key.CompareTo(key) == 0)
                 {
-                        findIndex = (uint) valueIndex;
-                        return true;
+                    findIndex = (uint) valueIndex;
+                    return true;
                 }
 
                 valueIndex = valuesInfo[valueIndex].previous;
@@ -412,6 +411,13 @@ namespace Svelto.DataStructures
                 next     = -1;
             }
         }
+        
+        Node[] _valuesInfo;
+        int[]  _buckets;
+        W[]    _values;
+        int    _freeValueCellIndex;
+        int    _count;
+        int    _collisions;
     }
 
     public class FasterDictionaryException : Exception

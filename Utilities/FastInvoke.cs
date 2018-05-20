@@ -20,35 +20,38 @@ namespace Svelto.Utilities
             throw new ArgumentException("<color=orange>Svelto.ECS</color> unsupported field (must be an interface and a class)");
         }
 #elif !NETFX_CORE && !NET_STANDARD_2_0 && !UNITY_WSA_10_0 && !NETSTANDARD2_0
-        //https://github.com/vexe/Fast.Reflection/blob/master/FastReflection.cs
-        static ILEmitter emit = new ILEmitter();
-        
+        //https://stackoverflow.com/questions/1272454/generate-dynamic-method-to-set-a-field-of-a-struct-instead-of-using-reflection
+        static readonly ILEmitter emit = new ILEmitter();
         public static ActionRef<T> MakeSetter(FieldInfo field)
         {
             if (field.FieldType.IsInterfaceEx() == true && field.FieldType.IsValueTypeEx() == false)
             {
-                DynamicMethod m = new DynamicMethod("setter", typeof(void), new[] {typeof(T).MakeByRefType(), typeof(object)});
-                emit.il = m.GetILGenerator();
+                var setter = new DynamicMethod("setter", typeof(void),
+                                               new[] {typeof(T).MakeByRefType(), typeof(object)}, true);
+                
+                emit.il = setter.GetILGenerator();
 
-                emit.LoadArg0OntoStack() 
-                    .ifclass_ldind_ref(field.FieldType) //push pointer or reference on the stack
-                    .LoadArg1OntoStack() //push value to set
-                    .setfld(field) //set value to field (1) of object (0)
-                    .ret();
+                emit.LoadArg0OntoStack() //load argument 0 on the stack (the ref object)
+                    .IfClassLoadIndirectReference(typeof(T)) 
+                     //The address is popped from the stack; the object reference located at the address is fetched.
+                     //The fetched reference is pushed onto the stack. this must be done only for an object and not for a struct
+                     //infatti in questo caso il parametro è la locazione di memoria che contiene il puntatore
+                     //all'oggetto e non il puntatore all'oggetto stesso.
+                    .LoadArg1OntoStack()
+                    .SetField(field) //set value to field (stack 1) of object (stack 0)
+                    .Return(); 
 
-                var del = m.CreateDelegate(typeof(ActionRef<T>));
-
-                return (ActionRef<T>) del;
+                return (ActionRef<T>) setter.CreateDelegate(typeof(ActionRef<T>));
             }
-
+            
             throw new ArgumentException("<color=orange>Svelto.ECS</color> unsupported field (must be an interface and a class)");
         }
-        
+ 
         class ILEmitter
         {
             public ILGenerator il;
 
-            public ILEmitter ret()                                 { il.Emit(OpCodes.Ret); return this; }
+            public ILEmitter Return()                                 { il.Emit(OpCodes.Ret); return this; }
             public ILEmitter cast(Type type)                       { il.Emit(OpCodes.Castclass, type); return this; }
             public ILEmitter box(Type type)                        { il.Emit(OpCodes.Box, type); return this; }
             public ILEmitter unbox_any(Type type)                  { il.Emit(OpCodes.Unbox_Any, type); return this; }
@@ -71,7 +74,7 @@ namespace Svelto.Utilities
             public ILEmitter ldarg(int idx)                        { il.Emit(OpCodes.Ldarg, idx); return this; }
             public ILEmitter ldarg_s(int idx)                      { il.Emit(OpCodes.Ldarg_S, idx); return this; }
             public ILEmitter ldstr(string str)                     { il.Emit(OpCodes.Ldstr, str); return this; }
-            public ILEmitter ifclass_ldind_ref(Type type)		   { if (!type.IsValueType) il.Emit(OpCodes.Ldind_Ref); return this; }
+            public ILEmitter IfClassLoadIndirectReference(Type type)		   { if (!type.IsValueType) il.Emit(OpCodes.Ldind_Ref); return this; }
             public ILEmitter ldloc0()                              { il.Emit(OpCodes.Ldloc_0); return this; }
             public ILEmitter ldloc1()                              { il.Emit(OpCodes.Ldloc_1); return this; }
             public ILEmitter ldloc2()                              { il.Emit(OpCodes.Ldloc_2); return this; }
@@ -101,9 +104,8 @@ namespace Svelto.Utilities
             public ILEmitter ldsfld(FieldInfo field)               { il.Emit(OpCodes.Ldsfld, field); return this; }
             public ILEmitter lodfld(FieldInfo field)               { if (field.IsStatic) ldsfld(field); else ldfld(field); return this; }
             public ILEmitter ifvaluetype_box(Type type)            { if (type.IsValueType) il.Emit(OpCodes.Box, type); return this; }
-            public ILEmitter stfld(FieldInfo field)                { il.Emit(OpCodes.Stfld, field); return this; }
-            public ILEmitter stsfld(FieldInfo field)               { il.Emit(OpCodes.Stsfld, field); return this; }
-            public ILEmitter setfld(FieldInfo field)               { if (field.IsStatic) stsfld(field); else stfld(field); return this; }
+            public ILEmitter SetField(FieldInfo field)                { il.Emit(OpCodes.Stfld, field); return this; }
+            public ILEmitter setstaticfield(FieldInfo field)       { il.Emit(OpCodes.Stsfld, field); return this; }
             public ILEmitter unboxorcast(Type type)                { if (type.IsValueType) unbox(type); else cast(type); return this; }
             public ILEmitter callorvirt(MethodInfo method)         { if (method.IsVirtual) il.Emit(OpCodes.Callvirt, method); else il.Emit(OpCodes.Call, method); return this; }
             public ILEmitter stind_ref()                           { il.Emit(OpCodes.Stind_Ref); return this; }
@@ -136,6 +138,24 @@ namespace Svelto.Utilities
             throw new ArgumentException("<color=orange>Svelto.ECS</color> unsupported field (must be an interface and a class)");
         }
 #endif
+        /*
+         * public delegate void ByRefStructAction(ref SomeType instance, object value);
+
+private static ByRefStructAction BuildSetter(FieldInfo field)
+{
+    ParameterExpression instance = Expression.Parameter(typeof(SomeType).MakeByRefType(), "instance");
+    ParameterExpression value = Expression.Parameter(typeof(object), "value");
+
+    Expression<ByRefStructAction> expr =
+        Expression.Lambda<ByRefStructAction>(
+            Expression.Assign(
+                Expression.Field(instance, field),
+                Expression.Convert(value, field.FieldType)),
+            instance,
+            value);
+
+    return expr.Compile();
+}*/
     }
     
     public delegate void ActionRef<T>(ref T target, object value);
