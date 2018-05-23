@@ -71,7 +71,7 @@ namespace Svelto.DataStructures
         {
             if (AddValue(key, ref value) == false)
             {
-                throw new FasterDictionaryException("Key already existing");
+                throw new FasterDictionaryException("Key already present");
             }
         }
 
