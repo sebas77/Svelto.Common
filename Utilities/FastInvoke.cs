@@ -15,7 +15,14 @@ namespace Svelto.Utilities
         {
             if (field.FieldType.IsInterfaceEx() == true && field.FieldType.IsValueTypeEx() == false)
             {
-                return new ActionCast<T>((ref T target, object o) => field.SetValue(target, o));
+                return (ref T target, object o) =>
+                       {
+                           //TypedReference tr = __makeref(target);
+                           //field.SetValueDirect(tr, o);
+                           object refo = target;
+                           field.SetValue(refo, o);
+                           target = (T) refo;
+                       };
             }
 
             throw new ArgumentException("<color=orange>Svelto.ECS</color> unsupported field (must be an interface and a class)");
@@ -27,7 +34,7 @@ namespace Svelto.Utilities
         {
             if (field.FieldType.IsInterfaceEx() == true && field.FieldType.IsValueTypeEx() == false)
             {
-                var setter = new DynamicMethod("setter", typeof(void),
+                var setter = new DynamicMethod("setter", typeof(void),    
                                                new[] {typeof(T).MakeByRefType(), typeof(object)}, true);
                 
                 emit.il = setter.GetILGenerator();
@@ -58,7 +65,7 @@ namespace Svelto.Utilities
             public ILEmitter unbox_any(Type type)                  { il.Emit(OpCodes.Unbox_Any, type); return this; }
             public ILEmitter unbox(Type type)                      { il.Emit(OpCodes.Unbox, type); return this; }
             public ILEmitter call(MethodInfo method)               { il.Emit(OpCodes.Call, method); return this; }
-            public ILEmitter callvirt(MethodInfo method)           { il.Emit(OpCodes.Callvirt, method); return this; }
+            public ILEmitter callvirt(MethodInfo method)           { il.Emit(OpCodes.Callvirt, method); return this; }    
             public ILEmitter ldnull()                              { il.Emit(OpCodes.Ldnull); return this; }
             public ILEmitter bne_un(Label target)                  { il.Emit(OpCodes.Bne_Un, target); return this; }
             public ILEmitter beq(Label target)                     { il.Emit(OpCodes.Beq, target); return this; }
