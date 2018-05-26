@@ -144,6 +144,11 @@ namespace Svelto.DataStructures
             throw new NotImplementedException();
         }
 
+        public void AddCapacity(int size)
+        {
+            throw new NotImplementedException();
+        }
+
         public W this[T key]
         {
             get
