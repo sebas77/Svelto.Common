@@ -59,7 +59,7 @@ namespace Svelto.Utilities
         {
             public ILGenerator il;
 
-            public ILEmitter Return()                                 { il.Emit(OpCodes.Ret); return this; }
+            public ILEmitter Return()                              { il.Emit(OpCodes.Ret); return this; }
             public ILEmitter cast(Type type)                       { il.Emit(OpCodes.Castclass, type); return this; }
             public ILEmitter box(Type type)                        { il.Emit(OpCodes.Box, type); return this; }
             public ILEmitter unbox_any(Type type)                  { il.Emit(OpCodes.Unbox_Any, type); return this; }
