@@ -57,6 +57,11 @@ namespace Svelto.DataStructures
             get { return _count; }
         }
 
+        public int LastValueIndex
+        {
+            get { return _freeValueCellIndex - 1; }
+        }
+
         public bool IsReadOnly
         {
             get { return false; }
@@ -108,7 +113,7 @@ namespace Svelto.DataStructures
 
         public IEnumerator<KeyValuePair<T, W>> GetEnumerator()
         {
-            return new EnumeratorClass(_valuesInfo, _values, (int)_freeValueCellIndex);
+            return new EnumeratorClass(_valuesInfo, _values, _freeValueCellIndex);
         }
 
         public bool Remove(KeyValuePair<T, W> item)
@@ -121,16 +126,16 @@ namespace Svelto.DataStructures
             return GetIndex(index, _buckets, _valuesInfo);
         }
 
-        public bool TryGetValue(T key, out W value)
+        public bool TryGetValue(T key, out W result)
         {
             uint findIndex;
             if (FindIndex(key, _buckets, _valuesInfo, out findIndex))
             {
-                value = _values[findIndex];
+                result = _values[findIndex];
                 return true;
             }
 
-            value = default(W);
+            result = default(W);
             return false;
         }
 
@@ -303,6 +308,28 @@ namespace Svelto.DataStructures
 
             return true;
         }
+        
+        protected bool FindIndex(T key, out uint findIndex)
+        {
+            int hash        = (key.GetHashCode() & int.MaxValue);
+            int bucketIndex = hash % _buckets.Length;
+
+            int valueIndex = _buckets[bucketIndex] - 1;
+
+            while (valueIndex != -1)
+            {
+                //for some reason this is way faster they use Comparer<T>.default, should investigate
+                if (_valuesInfo[valueIndex].hashcode == hash && _valuesInfo[valueIndex].key.CompareTo(key) == 0)
+                {
+                    findIndex = (uint) valueIndex;
+                    return true;
+                }
+
+                valueIndex = _valuesInfo[valueIndex].previous;
+            }
+            findIndex = 0;
+            return false;
+        }
 
         static uint GetIndex(T key, int[] buckets, Node[] valuesInfo)
         {
@@ -345,12 +372,12 @@ namespace Svelto.DataStructures
                 valuesInfo[previous].next = next;
         }
 
-        internal class EnumeratorClass : IEnumerator<KeyValuePair<T, W>>
+        class EnumeratorClass : IEnumerator<KeyValuePair<T, W>>
         {
-            private Node[] _nodes;
-            private W[] _ws;
-            private int index;
-            private int _count;
+            Node[] _nodes;
+            W[]    _ws;
+            int    _index;
+            int    _count;
 
             public EnumeratorClass(Node[] nodes, W[] ws, int count)
             {
@@ -366,9 +393,9 @@ namespace Svelto.DataStructures
 
             public bool MoveNext()
             {
-                if (index < _count)
+                if (_index < _count)
                 {
-                    index++;
+                    _index++;
                     return true;
                 }
 
@@ -380,7 +407,7 @@ namespace Svelto.DataStructures
                 throw new NotImplementedException();
             }
 
-            public KeyValuePair<T, W> Current { get { return new KeyValuePair<T, W>(_nodes[index].key, _ws[index]); } }
+            public KeyValuePair<T, W> Current { get { return new KeyValuePair<T, W>(_nodes[_index].key, _ws[_index]); } }
 
             object IEnumerator.Current
             {
@@ -412,9 +439,10 @@ namespace Svelto.DataStructures
             }
         }
         
+        protected W[] _values;
+        
         Node[] _valuesInfo;
         int[]  _buckets;
-        W[]    _values;
         int    _freeValueCellIndex;
         int    _count;
         int    _collisions;

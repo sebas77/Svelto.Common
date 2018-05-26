@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Reflection;
-using System.Reflection.Emit;
 #if !(!NETFX_CORE && !NET_STANDARD_2_0 && !UNITY_WSA_10_0 && !NETSTANDARD2_0) && !ENABLE_IL2CPP
 using System.Linq.Expressions;
+#else
+using System.Reflection.Emit;
 #endif
 
 namespace Svelto.Utilities
@@ -10,11 +11,11 @@ namespace Svelto.Utilities
     public static class FastInvoke<T> 
     {
 #if ENABLE_IL2CPP
-        public static CastedAction<T> MakeSetter(FieldInfo field)
+        public static ActionCast<T> MakeSetter(FieldInfo field)
         {
             if (field.FieldType.IsInterfaceEx() == true && field.FieldType.IsValueTypeEx() == false)
             {
-                return new CastedAction<T>((ref T target, object o) => field.SetValue(target, o));
+                return new ActionCast<T>((ref T target, object o) => field.SetValue(target, o));
             }
 
             throw new ArgumentException("<color=orange>Svelto.ECS</color> unsupported field (must be an interface and a class)");
@@ -22,7 +23,7 @@ namespace Svelto.Utilities
 #elif !NETFX_CORE && !NET_STANDARD_2_0 && !UNITY_WSA_10_0 && !NETSTANDARD2_0
         //https://stackoverflow.com/questions/1272454/generate-dynamic-method-to-set-a-field-of-a-struct-instead-of-using-reflection
         static readonly ILEmitter emit = new ILEmitter();
-        public static ActionRef<T> MakeSetter(FieldInfo field)
+        public static ActionCast<T> MakeSetter(FieldInfo field)
         {
             if (field.FieldType.IsInterfaceEx() == true && field.FieldType.IsValueTypeEx() == false)
             {
@@ -41,7 +42,7 @@ namespace Svelto.Utilities
                     .SetField(field) //set value to field (stack 1) of object (stack 0)
                     .Return(); 
 
-                return (ActionRef<T>) setter.CreateDelegate(typeof(ActionRef<T>));
+                return (ActionCast<T>) setter.CreateDelegate(typeof(ActionCast<T>));
             }
             
             throw new ArgumentException("<color=orange>Svelto.ECS</color> unsupported field (must be an interface and a class)");
@@ -119,7 +120,7 @@ namespace Svelto.Utilities
         }
 #else
        //https://stackoverflow.com/questions/321650/how-do-i-set-a-field-value-in-an-c-sharp-expression-tree/321686#321686
-        public static ActionRef<T> MakeSetter(FieldInfo field)
+        public static ActionCast<T> MakeSetter(FieldInfo field)
         {
             if (field.FieldType.IsInterfaceEx() == true && field.FieldType.IsValueTypeEx() == false)
             {
@@ -130,33 +131,17 @@ namespace Svelto.Utilities
                 UnaryExpression convertedExp = Expression.TypeAs(valueExp, field.FieldType);
                 BinaryExpression assignExp = Expression.Assign(fieldExp, convertedExp);
 
-                var setter = Expression.Lambda<ActionRef<T, object>>(assignExp, targetExp, valueExp).Compile();
+                var setter = Expression.Lambda<ActionCast<T>>(assignExp, targetExp, valueExp).Compile();
 
-                return new CastedAction<T>(setter); 
+                return setter; 
             }
 
             throw new ArgumentException("<color=orange>Svelto.ECS</color> unsupported field (must be an interface and a class)");
         }
 #endif
-        /*
-         * public delegate void ByRefStructAction(ref SomeType instance, object value);
-
-private static ByRefStructAction BuildSetter(FieldInfo field)
-{
-    ParameterExpression instance = Expression.Parameter(typeof(SomeType).MakeByRefType(), "instance");
-    ParameterExpression value = Expression.Parameter(typeof(object), "value");
-
-    Expression<ByRefStructAction> expr =
-        Expression.Lambda<ByRefStructAction>(
-            Expression.Assign(
-                Expression.Field(instance, field),
-                Expression.Convert(value, field.FieldType)),
-            instance,
-            value);
-
-    return expr.Compile();
-}*/
     }
     
-    public delegate void ActionRef<T>(ref T target, object value);
+    public delegate void ActionCast<T>(ref T target, object value);
+    public delegate void ActionRef<T, W>(ref T target, ref W value);
+    public delegate void ActionRef<T>(ref T target);
 }
