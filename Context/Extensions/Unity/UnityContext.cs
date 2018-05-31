@@ -13,12 +13,13 @@ public abstract class UnityContext:MonoBehaviour
     }
 }
 
-//a Unity context is a platform specific context wrapper. 
-//Unity will drive the ICompositionRoot interface.
+//a Unity context is a platform specific context wrapper.
+//With Unity, craetes a GameObject and add this Monobehaviour to it
+//The GameObject will become one composition root holder.
 //OnContextCreated is called during the Awake of this MB
 //OnContextInitialized is called one frame after the MB started
 //OnContextDestroyed is called when the MB is destroyed
-public class UnityContext<T>: UnityContext where T:class, ICompositionRoot, new()
+public class UnityContext<T>: UnityContext where T:class, IUnityCompositionRoot, new()
 {
     protected override void OnAwake()
     {
