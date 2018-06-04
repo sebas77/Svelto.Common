@@ -40,37 +40,39 @@ namespace Svelto.Utilities
     }
 
 #if NETFX_CORE || NET_4_6
-    public sealed class ManualResetEventEx : ManualResetEventSlim
+    public sealed class ManualResetEventEx
     {
-        public new void Wait()
+        readonly ManualResetEventSlim _manualReset = new ManualResetEventSlim(false);
+        
+        public void Wait()
         {
-            base.Wait();
+            _manualReset.Wait();
         }
 
-        public new void Wait(int ms)
+        public void Wait(int ms)
         {
-            base.Wait(ms);
+            _manualReset.Wait(ms);
         }
 
-        public new void Reset()
+        public void Reset()
         {
-            base.Reset();
+            _manualReset.Reset();
         }
 
-        public new void Set()
+        public void Set()
         {
-            base.Set();
+            _manualReset.Set();
         }
 
-        public new void Dispose()
+        public void Dispose()
         {
-            base.Dispose();
+            _manualReset.Dispose();
         }
     }
 #else
     public class ManualResetEventEx
     {
-        ManualResetEvent _manualReset = new ManualResetEvent(false);
+        readonly ManualResetEvent _manualReset = new ManualResetEvent(false);
         
         public void Wait()
         {
