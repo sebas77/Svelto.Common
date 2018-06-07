@@ -525,8 +525,8 @@ namespace Svelto.DataStructures
 
         public T this[int i]
         {
-            get { DBC.Check.Require(i < _count, "out of bound index"); return _buffer[i]; }
-            set { DBC.Check.Require(i < _count, "out of bound index"); _buffer[i] = value; }
+            get { DBC.Common.Check.Require(i < _count, "out of bound index"); return _buffer[i]; }
+            set { DBC.Common.Check.Require(i < _count, "out of bound index"); _buffer[i] = value; }
         }
 
         public void Add(T item)
@@ -648,7 +648,7 @@ namespace Svelto.DataStructures
 
         public void Insert(int index, T item)
         {
-            DBC.Check.Require(index < _count, "out of bound index");
+            DBC.Common.Check.Require(index < _count, "out of bound index");
 
             if (_count == _buffer.Length) AllocateMore();
 
@@ -678,7 +678,7 @@ namespace Svelto.DataStructures
 
         public void RemoveAt(int index)
         {
-            DBC.Check.Require(index < _count, "out of bound index");
+            DBC.Common.Check.Require(index < _count, "out of bound index");
 
             if (index == --_count)
                 return;
@@ -741,7 +741,7 @@ namespace Svelto.DataStructures
 
         public bool UnorderedRemoveAt(int index)
         {
-            DBC.Check.Require(index < _count && _count > 0, "out of bound index");
+            DBC.Common.Check.Require(index < _count && _count > 0, "out of bound index");
 
             if (index == --_count)
             {
@@ -774,7 +774,7 @@ namespace Svelto.DataStructures
 
         void AllocateMore(int newSize)
         {
-            DBC.Check.Require(newSize > _buffer.Length);
+            DBC.Common.Check.Require(newSize > _buffer.Length);
             var newLength = Math.Max(_buffer.Length, 1);
 
             while (newLength < newSize)

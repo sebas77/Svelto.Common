@@ -5,7 +5,7 @@
 using System;
 using System.Diagnostics;
 
-namespace DBC
+namespace DBC.Common
 {
 	/// <summary>
 	/// Design By Contract Checks.
