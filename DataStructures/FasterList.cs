@@ -801,11 +801,12 @@ namespace Svelto.DataStructures
 
             result = (U)_buffer[index];
 
-            return result != null;
+            return _isValueType == true || result != null;
         }
 
         T[] _buffer;
         int _count;
+        static readonly bool _isValueType = typeof(T).IsValueTypeEx();
 
         public static class NoVirt
         {
@@ -821,7 +822,7 @@ namespace Svelto.DataStructures
                 return fasterList._buffer;
             }
             
-            internal static T[] ToArrayFast(FasterList<T> fasterList)
+            public static T[] ToArrayFast(FasterList<T> fasterList)
             {
                 return fasterList._buffer;
             }
