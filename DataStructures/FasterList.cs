@@ -188,7 +188,6 @@ namespace Svelto.DataStructures
         }
 
         readonly FasterList<T> _list;
-        readonly T[] _buffer;
     }
 
     public struct FasterListThreadSafe<T> : IList<T>
