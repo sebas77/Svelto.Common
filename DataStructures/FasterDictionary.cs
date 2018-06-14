@@ -1,20 +1,20 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Test;
+using System.Runtime.CompilerServices;
 
-namespace Svelto.DataStructures
+namespace Svelto.DataStructures.Experimental
 {
     public class FasterDictionary<T, W> : IDictionary<T, W> where T : IComparable<T>
     {
-        protected FasterDictionary(int size)
+        public FasterDictionary(int size)
         {
             _valuesInfo = new Node[size];
             _values     = new W[size];
             _buckets    = new int[HashHelpers.GetPrime(size)];
         }
 
-        protected FasterDictionary()
+        public FasterDictionary()
         {
             _valuesInfo = new Node[1];
             _values = new W[1];
@@ -65,7 +65,7 @@ namespace Svelto.DataStructures
         {
             get { return false; }
         }
-        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(T key, W value)
         {
             Add(key, ref value);
@@ -86,7 +86,9 @@ namespace Svelto.DataStructures
 
         public void Clear()
         {
-            throw new NotImplementedException();
+            _count = 0;
+            Array.Clear(_buckets, 0, _buckets.Length);
+            Array.Clear(_values, 0, _values.Length);
         }
 
         public bool Contains(KeyValuePair<T, W> item)
@@ -94,6 +96,7 @@ namespace Svelto.DataStructures
             throw new NotImplementedException();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ContainsKey(T key)
         {
             uint findIndex;
@@ -125,6 +128,7 @@ namespace Svelto.DataStructures
             return GetIndex(index, _buckets, _valuesInfo);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetValue(T key, out W result)
         {
             uint findIndex;
@@ -150,11 +154,13 @@ namespace Svelto.DataStructures
 
         public W this[T key]
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 return _values[GetIndex(key, _buckets, _valuesInfo)];
             }
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set { AddValue(key, ref value); }
         }
 
@@ -165,30 +171,34 @@ namespace Svelto.DataStructures
             int bucketIndex = hash % _buckets.Length;
 
             //buckets value -1 means it's empty
-            var valueIndex = _buckets[bucketIndex] - 1;
+            var valueIndex = GetBucketIndex(_buckets[bucketIndex]);
             if (valueIndex == -1)
-            {
                 //create the infonode at the last position and fill it with the relevant information
                 _valuesInfo[_freeValueCellIndex] = new Node(ref key, hash);
-            }
             else
             {
+                int currentValueIndex = valueIndex;
                 do
                 {
+                    //must check if the key already exists in the dictionary
                     //for some reason this is way faster they use Comparer<T>.default, should investigate
-                    if (_valuesInfo[valueIndex].hashcode == hash && _valuesInfo[valueIndex].key.CompareTo(key) == 0)
-                    {
-                        return false;
-                    }
+                    if (_valuesInfo[currentValueIndex].hashcode == hash 
+                        && _valuesInfo[currentValueIndex].key.CompareTo(key) == 0)
+                            return false;
 
-                    valueIndex = _valuesInfo[valueIndex].previous;
-                } while (valueIndex != -1);
+                    currentValueIndex = _valuesInfo[currentValueIndex].previous;
+                }
+                while (currentValueIndex != -1);
 
                 //oops collision!
                 _collisions++;
                 //create a new one that points to the existing one
-                _valuesInfo[_freeValueCellIndex]            = new Node(ref key, hash, _buckets[bucketIndex] - 1);
-                _valuesInfo[_buckets[bucketIndex] - 1].next = (int) _freeValueCellIndex;
+                //new one prev = the first in the bucket
+                _valuesInfo[_freeValueCellIndex] = 
+                    new Node(ref key, hash, valueIndex);
+                //the first in the bucket next = new one
+                _valuesInfo[valueIndex].next = 
+                    (int) _freeValueCellIndex;
             }
 
             //item with this bucketIndex will point to the last value created
@@ -198,8 +208,10 @@ namespace Svelto.DataStructures
 
             if (++_freeValueCellIndex == _values.Length)
             {
-                Array.Resize(ref _values, HashHelpers.ExpandPrime((int) _freeValueCellIndex));
-                Array.Resize(ref _valuesInfo, HashHelpers.ExpandPrime((int) _freeValueCellIndex));
+                Array.Resize(ref _values, 
+                    HashHelpers.ExpandPrime((int) _freeValueCellIndex));
+                Array.Resize(ref _valuesInfo, 
+                    HashHelpers.ExpandPrime((int) _freeValueCellIndex));
             }
 
             //too many collisions?
@@ -221,7 +233,7 @@ namespace Svelto.DataStructures
                     //link to the next value index and the bucket will
                     //be updated with the current one. In this way we can
                     //rebuild the linkedlist.
-                    valueIndex = _buckets[bucketIndex] - 1;
+                    valueIndex = GetBucketIndex(_buckets[bucketIndex]);
                     if (valueIndex != -1)
                     {
                         _collisions++;
@@ -250,7 +262,7 @@ namespace Svelto.DataStructures
             int bucketIndex = hash % _buckets.Length;
 
             //first update the buckets
-            int valueIndex = _buckets[bucketIndex] - 1;
+            int valueIndex = GetBucketIndex(_buckets[bucketIndex]);
 
             if (valueIndex >= _freeValueCellIndex) return false;
 
@@ -259,7 +271,7 @@ namespace Svelto.DataStructures
                 if (_valuesInfo[valueIndex].hashcode == hash && _valuesInfo[valueIndex].key.CompareTo(key) == 0)
                 {
                     //se il bucket index punta direttamente alla cela da rimuovere
-                    if (_buckets[bucketIndex] - 1 == valueIndex) //facciamo puntare alla cella precedente, potrebbe essere -1! significa che il backet è vuoto
+                    if (GetBucketIndex(_buckets[bucketIndex]) == valueIndex) //facciamo puntare alla cella precedente, potrebbe essere -1! significa che il backet è vuoto
                         _buckets[bucketIndex] = _valuesInfo[valueIndex].previous + 1;
                     else
                     {
@@ -291,7 +303,7 @@ namespace Svelto.DataStructures
                 var movingBucketIndex = _valuesInfo[_freeValueCellIndex].hashcode % _buckets.Length;
 
                 //se il bucket da muovere punta direttamente alla cella da muovere
-                if (_buckets[movingBucketIndex] - 1 == _freeValueCellIndex)
+                if (GetBucketIndex(_buckets[movingBucketIndex]) == _freeValueCellIndex)
                 { //lo facciamo puntare alla cella da riempire
                     _buckets[movingBucketIndex] = valueIndex + 1;
                 }
@@ -312,18 +324,26 @@ namespace Svelto.DataStructures
 
             return true;
         }
-        
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static int GetBucketIndex(int i)
+        {
+            return i - 1;
+        }
+
         protected bool FindIndex(T key, out uint findIndex)
         {
             int hash        = (key.GetHashCode() & int.MaxValue);
             int bucketIndex = hash % _buckets.Length;
 
-            int valueIndex = _buckets[bucketIndex] - 1;
+            int valueIndex = GetBucketIndex(_buckets[bucketIndex]);
 
             while (valueIndex != -1)
             {
-                //for some reason this is way faster they use Comparer<T>.default, should investigate
-                if (_valuesInfo[valueIndex].hashcode == hash && _valuesInfo[valueIndex].key.CompareTo(key) == 0)
+                //for some reason this is way faster than using
+                //Comparer<T>.default, should investigate
+                if (_valuesInfo[valueIndex].hashcode == hash && 
+                    _valuesInfo[valueIndex].key.CompareTo(key) == 0)
                 {
                     findIndex = (uint) valueIndex;
                     return true;
@@ -331,6 +351,7 @@ namespace Svelto.DataStructures
 
                 valueIndex = _valuesInfo[valueIndex].previous;
             }
+
             findIndex = 0;
             return false;
         }
@@ -348,7 +369,7 @@ namespace Svelto.DataStructures
             int hash        = (key.GetHashCode() & int.MaxValue);
             int bucketIndex = hash % buckets.Length;
 
-            int valueIndex = buckets[bucketIndex] - 1;
+            int valueIndex = GetBucketIndex(buckets[bucketIndex]);
 
             while (valueIndex != -1)
             {
@@ -456,85 +477,6 @@ namespace Svelto.DataStructures
     {
         public FasterDictionaryException(string keyAlreadyExisting):base(keyAlreadyExisting)
         {}
-    }
-
-    public struct ReadOnlyCollectionStruct<T> : ICollection<T>
-    {
-        public static ReadOnlyCollectionStruct<T> DefaultList = new ReadOnlyCollectionStruct<T>(new T[0], 0);
-
-        public ReadOnlyCollectionStruct(T[] values, int count)
-        {
-            _values = values;
-            _count = count;
-        }
-
-        IEnumerator<T> IEnumerable<T>.GetEnumerator()
-        {
-            throw new NotImplementedException();
-        }
-
-        public IEnumerator GetEnumerator()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void CopyTo(Array array, int index)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Add(T item)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Clear()
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool Contains(T item)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void CopyTo(T[] array, int arrayIndex)
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool Remove(T item)
-        {
-            throw new NotImplementedException();
-        }
-
-        public int Count
-        {
-            get { return _count;  }
-        }
-
-        public bool IsReadOnly
-        {
-            get { return true;  }
-        }
-
-        public bool IsSynchronized
-        {
-            get { return false; }
-        }
-        public object SyncRoot
-        {
-            get { return null; }
-        }
-        
-        T[] _values;
-        int _count;
-
-
-        public T this[int i]
-        {
-            get { return _values[i]; }
-        }
     }
 }
 

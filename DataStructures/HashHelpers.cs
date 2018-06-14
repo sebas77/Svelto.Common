@@ -12,11 +12,12 @@
 ** 
 ===========================================================*/
 
+using System;
 using System.Diagnostics;
 
-namespace System.Collections.Test
+namespace Svelto.DataStructures
 {
-    internal static class HashHelpers
+    public static class HashHelpers
     {
         public const int HashCollisionThreshold = 100;
 
