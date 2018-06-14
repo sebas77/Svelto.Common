@@ -17,7 +17,7 @@ namespace Svelto.WeakEvents
 
         public static WeakEvent operator-(WeakEvent c1, Action x)
         {
-            DBC.Check.Require(x != null);
+            DBC.Common.Check.Require(x != null);
             c1.Remove(x);
 
             return c1;
@@ -109,7 +109,7 @@ namespace Svelto.WeakEvents
 
         public static WeakEvent<T1> operator-(WeakEvent<T1> c1, Action<T1> x)
         {
-            DBC.Check.Require(x != null);
+            DBC.Common.Check.Require(x != null);
             c1.Remove(x);
 
             return c1;
@@ -153,7 +153,7 @@ namespace Svelto.WeakEvents
 
         public static WeakEvent<T1, T2> operator-(WeakEvent<T1, T2> c1, Action<T1, T2> x)
         {
-            DBC.Check.Require(x != null);
+            DBC.Common.Check.Require(x != null);
             c1.Remove(x);
 
             return c1;

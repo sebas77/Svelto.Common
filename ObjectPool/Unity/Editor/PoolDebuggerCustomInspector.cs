@@ -1,29 +1,30 @@
 #if UNITY_5_3_OR_NEWER || UNITY_5
-
 using UnityEngine;
 using UnityEditor;
-
-[CustomEditor(typeof(PoolDebugger))]
-public class PoolDebuggerCustomInspector : Editor
+namespace Svelto.ObjectPool
 {
-    public override void OnInspectorGUI()
+    [CustomEditor(typeof(PoolDebugger))]
+    public class PoolDebuggerCustomInspector : Editor
     {
-        DrawDefaultInspector();
-
-        PoolDebugger myScript = (PoolDebugger)target;
-        if(GUILayout.Button("Fetch Object Created"))
+        public override void OnInspectorGUI()
         {
-            myScript.FetchObjectCreated();
-        }
+            DrawDefaultInspector();
 
-        if(GUILayout.Button("Fetch Object Reused"))
-        {
-            myScript.FetchObjectReused();
-        }
+            PoolDebugger myScript = (PoolDebugger) target;
+            if (GUILayout.Button("Fetch Object Created"))
+            {
+                myScript.FetchObjectCreated();
+            }
 
-        if(GUILayout.Button("Fetch Object Recycled"))
-        {
-            myScript.FetchObjectRecycled();
+            if (GUILayout.Button("Fetch Object Reused"))
+            {
+                myScript.FetchObjectReused();
+            }
+
+            if (GUILayout.Button("Fetch Object Recycled"))
+            {
+                myScript.FetchObjectRecycled();
+            }
         }
     }
 }

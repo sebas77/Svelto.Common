@@ -5,8 +5,7 @@ using System.Collections.Test;
 
 namespace Svelto.DataStructures
 {
-    //totally WIP so internal atm
-    class FasterDictionary<T, W> : IDictionary<T, W> where T : IComparable<T>
+    public class FasterDictionary<T, W> : IDictionary<T, W> where T : IComparable<T>
     {
         protected FasterDictionary(int size)
         {
