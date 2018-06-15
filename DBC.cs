@@ -1,9 +1,7 @@
-#if PROFILER
-#undef DEBUG
-#endif
-
 using System;
+#if PROFILER || !DEBUG
 using System.Diagnostics;
+#endif
 
 namespace DBC.Common
 {
@@ -61,7 +59,9 @@ namespace DBC.Common
 		/// <summary>
 		/// Precondition check.
 		/// </summary>
-		[Conditional("DEBUG")]
+#if PROFILER || !DEBUG
+		[Conditional("__NEVER_DEFINED__")]
+#endif
 		public static void Require(bool assertion, string message)
 		{
 			if (UseExceptions) 
@@ -79,7 +79,9 @@ namespace DBC.Common
 		/// Precondition check.
 		/// </summary>
 		/// 
-		[Conditional("DEBUG")]
+#if PROFILER || !DEBUG
+		[Conditional("__NEVER_DEFINED__")]
+#endif
 		public static void Require(bool assertion, string message, Exception inner)
 		{
 			if (UseExceptions) 
@@ -97,7 +99,9 @@ namespace DBC.Common
 		/// Precondition check.
 		/// </summary>
 		/// 
-		[Conditional("DEBUG")]
+#if PROFILER || !DEBUG
+		[Conditional("__NEVER_DEFINED__")]
+#endif
 		public static void Require(bool assertion)
 		{
 			if (UseExceptions) 
@@ -115,7 +119,9 @@ namespace DBC.Common
 		/// Postcondition check.
 		/// </summary>
 		/// 
-		[Conditional("DEBUG")]
+#if PROFILER || !DEBUG
+		[Conditional("__NEVER_DEFINED__")]
+#endif
 		public static void Ensure(bool assertion, string message)
 		{
 			if (UseExceptions) 
@@ -133,7 +139,9 @@ namespace DBC.Common
 		/// Postcondition check.
 		/// </summary>
 		/// 
-		[Conditional("DEBUG")]
+#if PROFILER || !DEBUG
+		[Conditional("__NEVER_DEFINED__")]
+#endif
 		public static void Ensure(bool assertion, string message, Exception inner)
 		{
 			if (UseExceptions) 
@@ -151,7 +159,9 @@ namespace DBC.Common
 		/// Postcondition check.
 		/// </summary>
 		/// 
-		[Conditional("DEBUG")]
+#if PROFILER || !DEBUG
+		[Conditional("__NEVER_DEFINED__")]
+#endif
 		public static void Ensure(bool assertion)
 		{
 			if (UseExceptions) 
@@ -169,7 +179,9 @@ namespace DBC.Common
 		/// Invariant check.
 		/// </summary>
 		/// 
-		[Conditional("DEBUG")]
+#if PROFILER || !DEBUG
+		[Conditional("__NEVER_DEFINED__")]
+#endif
 		public static void Invariant(bool assertion, string message)
 		{
 			if (UseExceptions) 
@@ -187,7 +199,9 @@ namespace DBC.Common
 		/// Invariant check.
 		/// </summary>
 		/// 
-		[Conditional("DEBUG")]
+#if PROFILER || !DEBUG
+		[Conditional("__NEVER_DEFINED__")]
+#endif
 		public static void Invariant(bool assertion, string message, Exception inner)
 		{
 			if (UseExceptions) 
@@ -205,7 +219,9 @@ namespace DBC.Common
 		/// Invariant check.
 		/// </summary>
 		/// 
-		[Conditional("DEBUG")]
+#if PROFILER || !DEBUG
+		[Conditional("__NEVER_DEFINED__")]
+#endif
 		public static void Invariant(bool assertion)
 		{
 			if (UseExceptions) 
@@ -222,7 +238,9 @@ namespace DBC.Common
 		/// <summary>
 		/// Assertion check.
 		/// </summary>
-		[Conditional("DEBUG")]
+#if PROFILER || !DEBUG
+		[Conditional("__NEVER_DEFINED__")]
+#endif
 		public static void Assert(bool assertion, string message)
 		{
 			if (UseExceptions) 
@@ -240,7 +258,9 @@ namespace DBC.Common
 		/// Assertion check.
 		/// </summary>
 		/// 
-		[Conditional("DEBUG")]
+#if PROFILER || !DEBUG
+		[Conditional("__NEVER_DEFINED__")]
+#endif
 		public static void Assert(bool assertion, string message, Exception inner)
 		{
 			if (UseExceptions) 
@@ -258,7 +278,9 @@ namespace DBC.Common
 		/// Assertion check.
 		/// </summary>
 		/// 
-		[Conditional("DEBUG")]
+#if PROFILER || !DEBUG
+		[Conditional("__NEVER_DEFINED__")]
+#endif
 		public static void Assert(bool assertion)
 		{
 			if (UseExceptions) 
@@ -315,7 +337,7 @@ namespace DBC.Common
 
 	} // End Check
 
-    internal class Trace
+    class Trace
     {
         internal static void Assert(bool assertion, string v)
         {

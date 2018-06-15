@@ -1,4 +1,3 @@
-using System;
 #if NETFX_CORE
 using System.Threading.Tasks;
 #endif

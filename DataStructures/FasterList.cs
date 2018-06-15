@@ -495,6 +495,15 @@ namespace Svelto.DataStructures
 
             _buffer = new T[initialSize];
         }
+        
+        public FasterList(T[] collection)
+        {
+            _buffer = new T[collection.Length];
+
+            Array.Copy(collection, _buffer, collection.Length);
+
+            _count = collection.Length;
+        }
 
         public FasterList(ICollection<T> collection)
         {
@@ -537,9 +546,16 @@ namespace Svelto.DataStructures
             _buffer[_count++] = item;
         }
 
+        public void AddRef(ref T item)
+        {
+            if (_count == _buffer.Length)
+                AllocateMore();
+
+            _buffer[_count++] = item;
+        }
 
         /// <summary>
-        /// this is a dirtish trick to be able to use the index operastor 
+        /// this is a dirtish trick to be able to use the index operator 
         /// before adding the elements through the Add functions
         /// </summary>
         /// <typeparam name="U"></typeparam>
@@ -822,9 +838,15 @@ namespace Svelto.DataStructures
                 return fasterList._buffer;
             }
             
-            public static T[] ToArrayFast(FasterList<T> fasterList)
+            internal static T[] ToArrayFast(FasterList<T> fasterList)
             {
                 return fasterList._buffer;
+            }
+
+            public static void FastSet(FasterList<T> fasterList, int index, T item)
+            {
+                fasterList._buffer[index] = item;
+                fasterList._count = index + 1;
             }
         }
 
