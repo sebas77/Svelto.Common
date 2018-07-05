@@ -103,7 +103,7 @@ namespace Svelto.WeakEvents
                 return true;
             }
             
-            Utility.Console.LogWarning("Target of weak action has been garbage collected");
+            Utility.Console.Log("<color=orange>Svelto.Common.WeakAction</color> Target of weak action has been garbage collected");
 
             return false;
         }
