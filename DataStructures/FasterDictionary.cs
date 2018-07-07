@@ -46,11 +46,6 @@ namespace Svelto.DataStructures.Experimental
             return _values;
         }
         
-        public W[] GetFasterValuesBuffer()
-        {
-            return _values;
-        }
-
         public int Count
         {
             get { return _count; }
@@ -65,7 +60,7 @@ namespace Svelto.DataStructures.Experimental
         {
             get { return false; }
         }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+
         public void Add(T key, W value)
         {
             Add(key, ref value);
@@ -96,7 +91,6 @@ namespace Svelto.DataStructures.Experimental
             throw new NotImplementedException();
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ContainsKey(T key)
         {
             uint findIndex;
@@ -128,7 +122,6 @@ namespace Svelto.DataStructures.Experimental
             return GetIndex(index, _buckets, _valuesInfo);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetValue(T key, out W result)
         {
             uint findIndex;
@@ -154,13 +147,11 @@ namespace Svelto.DataStructures.Experimental
 
         public W this[T key]
         {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 return _values[GetIndex(key, _buckets, _valuesInfo)];
             }
 
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set { AddValue(key, ref value); }
         }
 
@@ -325,7 +316,6 @@ namespace Svelto.DataStructures.Experimental
             return true;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int GetBucketIndex(int i)
         {
             return i - 1;
