@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 
 namespace Svelto.DataStructures.Experimental
 {
@@ -31,24 +30,29 @@ namespace Svelto.DataStructures.Experimental
 
         public ICollection<W> Values
         {
-            get { return new ReadOnlyCollectionStruct<W>(_values, _count); }
+            get { return new ReadOnlyCollectionStruct<W>(_values, _freeValueCellIndex); }
         }
 
         public ReadOnlyCollectionStruct<W> FasterValues
         {
-            get { return new ReadOnlyCollectionStruct<W>(_values, _count); }
+            get { return new ReadOnlyCollectionStruct<W>(_values, _freeValueCellIndex); }
         }
 
         public W[] GetFasterValuesBuffer(out int count)
         {
-            count = _count;
+            count = _freeValueCellIndex;
 
             return _values;
         }
         
+        public W[] GetFasterValuesBuffer()
+        {
+            return _values;
+        }
+
         public int Count
         {
-            get { return _count; }
+            get { return _freeValueCellIndex; }
         }
 
         public int LastValueIndex
@@ -60,7 +64,6 @@ namespace Svelto.DataStructures.Experimental
         {
             get { return false; }
         }
-
         public void Add(T key, W value)
         {
             Add(key, ref value);
@@ -81,9 +84,10 @@ namespace Svelto.DataStructures.Experimental
 
         public void Clear()
         {
-            _count = 0;
+            _freeValueCellIndex = 0;
             Array.Clear(_buckets, 0, _buckets.Length);
             Array.Clear(_values, 0, _values.Length);
+            Array.Clear(_valuesInfo, 0, _valuesInfo.Length);
         }
 
         public bool Contains(KeyValuePair<T, W> item)
@@ -243,7 +247,6 @@ namespace Svelto.DataStructures.Experimental
                 }
             }
 
-            _count++;
             return true;
         }
 
@@ -311,12 +314,23 @@ namespace Svelto.DataStructures.Experimental
                 _values[valueIndex] = _values[_freeValueCellIndex];
             }
 
-            _count--;
-
             return true;
         }
+        
+        public void Trim()
+        {
+            if (HashHelpers.ExpandPrime(_freeValueCellIndex) < _valuesInfo.Length)
+            {
+                Array.Resize(ref _values, 
+                             HashHelpers.ExpandPrime(_freeValueCellIndex));
+                Array.Resize(ref _valuesInfo, 
+                             HashHelpers.ExpandPrime(_freeValueCellIndex));
+                Array.Resize(ref _buckets, 
+                             HashHelpers.ExpandPrime(_freeValueCellIndex));
+            }
+        }
 
-        private static int GetBucketIndex(int i)
+        static int GetBucketIndex(int i)
         {
             return i - 1;
         }
@@ -325,7 +339,6 @@ namespace Svelto.DataStructures.Experimental
         {
             int hash        = (key.GetHashCode() & int.MaxValue);
             int bucketIndex = hash % _buckets.Length;
-
             int valueIndex = GetBucketIndex(_buckets[bucketIndex]);
 
             while (valueIndex != -1)
@@ -459,7 +472,6 @@ namespace Svelto.DataStructures.Experimental
         Node[] _valuesInfo;
         int[]  _buckets;
         int    _freeValueCellIndex;
-        int    _count;
         int    _collisions;
     }
 
