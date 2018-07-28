@@ -30,7 +30,7 @@ namespace Svelto.DataStructures.Experimental
 
         public ICollection<W> Values
         {
-            get { return new ReadOnlyCollectionStruct<W>(_values, _freeValueCellIndex); }
+            get { return FasterValues; }
         }
 
         public ReadOnlyCollectionStruct<W> FasterValues
@@ -84,7 +84,10 @@ namespace Svelto.DataStructures.Experimental
 
         public void Clear()
         {
+            if (_freeValueCellIndex == 0) return;
+            
             _freeValueCellIndex = 0;
+            
             Array.Clear(_buckets, 0, _buckets.Length);
             Array.Clear(_values, 0, _values.Length);
             Array.Clear(_valuesInfo, 0, _valuesInfo.Length);
@@ -325,8 +328,6 @@ namespace Svelto.DataStructures.Experimental
                              HashHelpers.ExpandPrime(_freeValueCellIndex));
                 Array.Resize(ref _valuesInfo, 
                              HashHelpers.ExpandPrime(_freeValueCellIndex));
-                Array.Resize(ref _buckets, 
-                             HashHelpers.ExpandPrime(_freeValueCellIndex));
             }
         }
 
@@ -339,6 +340,7 @@ namespace Svelto.DataStructures.Experimental
         {
             int hash        = (key.GetHashCode() & int.MaxValue);
             int bucketIndex = hash % _buckets.Length;
+
             int valueIndex = GetBucketIndex(_buckets[bucketIndex]);
 
             while (valueIndex != -1)
