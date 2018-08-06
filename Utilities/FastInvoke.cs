@@ -150,5 +150,6 @@ namespace Svelto.Utilities
     
     public delegate void ActionCast<T>(ref T target, object value);
     public delegate void ActionRef<T, W>(ref T target, ref W value);
+    public delegate void ActionRef<T, T1, W>(ref T target1, ref T1 target2, ref W value);
     public delegate void ActionRef<T>(ref T target);
 }
