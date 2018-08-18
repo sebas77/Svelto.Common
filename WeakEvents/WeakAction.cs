@@ -95,7 +95,7 @@ namespace Svelto.WeakEvents
                 catch (Exception e)
                 {
                     if (e.InnerException != null)
-                        throw e.InnerException;
+                        throw new Exception(e.InnerException.ToString());
 
                     throw;
                 }
