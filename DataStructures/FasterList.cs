@@ -819,6 +819,17 @@ namespace Svelto.DataStructures
 
             return _isValueType == true || result != null;
         }
+        
+        public void UnorderedRemoveRange(int groupStart, int groupEnd)
+        {
+            Array.Copy(_buffer, groupEnd, _buffer, groupStart, groupEnd - groupStart);
+        }
+
+        public void ResizeIfSmaller(int cellCount)
+        {
+            if (_buffer.Length < cellCount)
+                Resize(cellCount);
+        }
 
         T[] _buffer;
         int _count;
@@ -848,11 +859,6 @@ namespace Svelto.DataStructures
                 fasterList._buffer[index] = item;
                 fasterList._count = index + 1;
             }
-        }
-
-        public void UnorderedRemoveRange(int groupStart, int groupEnd)
-        {
-            Array.Copy(_buffer, groupEnd, _buffer, groupStart, groupEnd - groupStart);
         }
     }
 }

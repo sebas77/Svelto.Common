@@ -43,8 +43,7 @@ namespace Svelto.Utilities
                     .IfClassLoadIndirectReference(typeof(T)) 
                      //The address is popped from the stack; the object reference located at the address is fetched.
                      //The fetched reference is pushed onto the stack. this must be done only for an object and not for a struct
-                     //infatti in questo caso il parametro è la locazione di memoria che contiene il puntatore
-                     //all'oggetto e non il puntatore all'oggetto stesso.
+                     //as in this case the parameter is the location that contains the pointer and not the pointer
                     .LoadArg1OntoStack()
                     .SetField(field) //set value to field (stack 1) of object (stack 0)
                     .Return(); 
@@ -149,7 +148,4 @@ namespace Svelto.Utilities
     }
     
     public delegate void ActionCast<T>(ref T target, object value);
-
-    public delegate void ActionRef<T, W>(ref T target, ref W value);
-    public delegate void ActionRef<T>(ref T target);
 }
