@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Reflection;
-#if !(!NETFX_CORE && !NET_STANDARD_2_0 && !UNITY_WSA_10_0 && !NETSTANDARD2_0) && !ENABLE_IL2CPP
+#if !(!NETFX_CORE && !NET_STANDARD_2_0 && !UNITY_WSA_10_0 && !NETSTANDARD2_0&& !NET_4_6) && !ENABLE_IL2CPP 
 using System.Linq.Expressions;
 #else
 using System.Reflection.Emit;
@@ -27,7 +27,7 @@ namespace Svelto.Utilities
 
             throw new ArgumentException("<color=orange>Svelto.ECS</color> unsupported field (must be an interface and a class)");
         }
-#elif !NETFX_CORE && !NET_STANDARD_2_0 && !UNITY_WSA_10_0 && !NETSTANDARD2_0
+#elif !NETFX_CORE && !NET_STANDARD_2_0 && !UNITY_WSA_10_0 && !NETSTANDARD2_0 && !NET_4_6
         //https://stackoverflow.com/questions/1272454/generate-dynamic-method-to-set-a-field-of-a-struct-instead-of-using-reflection
         static readonly ILEmitter emit = new ILEmitter();
         public static ActionCast<T> MakeSetter(FieldInfo field)

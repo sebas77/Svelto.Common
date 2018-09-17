@@ -161,9 +161,14 @@ namespace Svelto.DataStructures.Experimental
             set { AddValue(key, ref value); }
         }
 
+        static int Hash(TKey key)
+        {
+            return key.GetHashCode() & int.MaxValue;
+        }
+
         bool AddValue(TKey key, ref TValue value)
         {
-            int hash        = key.GetHashCode();
+            int hash        = Hash(key);
             int bucketIndex = hash % _buckets.Length;
 
             //buckets value -1 means it's empty
@@ -254,7 +259,7 @@ namespace Svelto.DataStructures.Experimental
 
         public bool Remove(TKey key)
         {
-            int hash = key.GetHashCode();
+            int hash = Hash(key);
             int bucketIndex = hash % _buckets.Length;
 
             //find the bucket
@@ -364,7 +369,7 @@ namespace Svelto.DataStructures.Experimental
 
         protected bool FindIndex(TKey key, out uint findIndex)
         {
-            int hash        = key.GetHashCode();
+            int hash        = Hash(key);
             int bucketIndex = hash % _buckets.Length;
 
             int valueIndex = GetBucketIndex(_buckets, bucketIndex);
@@ -398,14 +403,13 @@ namespace Svelto.DataStructures.Experimental
 
         static bool FindIndex(TKey key, int[] buckets, Node[] valuesInfo, out uint findIndex)
         {
-            int hash        = key.GetHashCode();
+            int hash        = Hash(key);
             int bucketIndex = hash % buckets.Length;
 
             int valueIndex = GetBucketIndex(buckets, bucketIndex);
 
             while (valueIndex != -1)
-            {
-                //for some reason this is way faster they use Comparer<TKey>.default, should investigate
+            {   //for some reason this is way faster they use Comparer<TKey>.default, should investigate
                 if (valuesInfo[valueIndex].hashcode == hash && valuesInfo[valueIndex].key.CompareTo(key) == 0)
                 {
                     findIndex = (uint) valueIndex;
@@ -564,7 +568,10 @@ namespace Svelto.DataStructures.Experimental
 
             public TKey Current { get; }
 
-            object IEnumerator.Current => Current;
+            object IEnumerator.Current
+            {
+                get { return Current; }
+            }
 
             public void Dispose()
             {
