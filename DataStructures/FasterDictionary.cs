@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Svelto.DataStructures.Experimental
 {
@@ -162,58 +163,58 @@ namespace Svelto.DataStructures.Experimental
 
         bool AddValue(TKey key, ref TValue value)
         {
-//get the hash and bucket index
-            int hash        = key.GetHashCode() & int.MaxValue;
+            int hash        = key.GetHashCode();
             int bucketIndex = hash % _buckets.Length;
 
             //buckets value -1 means it's empty
-            var valueIndex = GetBucketIndex(_buckets[bucketIndex]);
+            var valueIndex = GetBucketIndex(_buckets, bucketIndex);
+            
             if (valueIndex == -1)
-                //create the infonode at the last position and fill it with the relevant information
+                //create the info node at the last position and fill it with the relevant information
                 _valuesInfo[_freeValueCellIndex] = new Node(ref key, hash);
-            else
+            else //collision or already exists
             {
                 int currentValueIndex = valueIndex;
                 do
                 {
                     //must check if the key already exists in the dictionary
-                    //for some reason this is way faster they use Comparer<TKey>.default, should investigate
+                    //for some reason this is faster than using Comparer<TKey>.default, should investigate
                     if (_valuesInfo[currentValueIndex].hashcode == hash 
                         && _valuesInfo[currentValueIndex].key.CompareTo(key) == 0)
-                            return false;
+                            return false; //already exists
 
                     currentValueIndex = _valuesInfo[currentValueIndex].previous;
                 }
-                while (currentValueIndex != -1);
-
+                while (currentValueIndex != -1); //-1 means no more values with key with the same hash
                 //oops collision!
                 _collisions++;
-                //create a new one that points to the existing one
-                //new one prev = the first in the bucket
-                _valuesInfo[_freeValueCellIndex] = 
-                    new Node(ref key, hash, valueIndex);
-                //the first in the bucket next = new one
-                _valuesInfo[valueIndex].next = 
-                    (int) _freeValueCellIndex;
+                //create a new node which previous index points to the existing one
+                _valuesInfo[_freeValueCellIndex] = new Node(ref key, hash, valueIndex);
+                //Important: the new one is always the one in the bucket
+                //so I can assume that the one pointing in the bucket is always the last value added
+                _valuesInfo[valueIndex].next = _freeValueCellIndex;
             }
 
             //item with this bucketIndex will point to the last value created
-            _buckets[bucketIndex] = _freeValueCellIndex + 1;
+            //ToDo: if instead I assume that the original one is the one in the bucket
+            //I wouldn't need to update the bucket here. Small optimization but important
+            SetBucketIndex(_buckets, bucketIndex, _freeValueCellIndex);
 
             _values[_freeValueCellIndex] = value;
 
             if (++_freeValueCellIndex == _values.Length)
             {
                 Array.Resize(ref _values, 
-                    HashHelpers.ExpandPrime((int) _freeValueCellIndex));
+                    HashHelpers.ExpandPrime(_freeValueCellIndex));
                 Array.Resize(ref _valuesInfo, 
-                    HashHelpers.ExpandPrime((int) _freeValueCellIndex));
+                    HashHelpers.ExpandPrime(_freeValueCellIndex));
             }
 
             //too many collisions?
             if (_collisions > _buckets.Length)
             {
                 //we need more space and less collisions
+                //ToDo: need to change from prime to Fibonacci sequence (could be quite faster)
                 _buckets = new int[HashHelpers.ExpandPrime(_collisions)];
 
                 _collisions = 0;
@@ -223,13 +224,13 @@ namespace Svelto.DataStructures.Experimental
                 for (int i = 0; i < _freeValueCellIndex; i++)
                 {
                     //get the original hash code and find the new bucketIndex
-                    bucketIndex = (_valuesInfo[i].hashcode) % _buckets.Length;
+                    bucketIndex = _valuesInfo[i].hashcode % _buckets.Length;
                     //bucketsIndex can be -1 or a next value. If it's -1
                     //means no collisions. If there is collision, it will
                     //link to the next value index and the bucket will
                     //be updated with the current one. In this way we can
                     //rebuild the linkedlist.
-                    valueIndex = GetBucketIndex(_buckets[bucketIndex]);
+                    valueIndex = GetBucketIndex(_buckets, bucketIndex);
                     if (valueIndex != -1)
                     {
                         _collisions++;
@@ -244,7 +245,7 @@ namespace Svelto.DataStructures.Experimental
 
                     //buckets at bucketIndex will remember the value/valueInfo 
                     //index for that bucketIndex. 
-                    _buckets[bucketIndex] = i + 1;
+                    SetBucketIndex(_buckets, bucketIndex, i);
                 }
             }
 
@@ -253,64 +254,83 @@ namespace Svelto.DataStructures.Experimental
 
         public bool Remove(TKey key)
         {
-            int hash = (key.GetHashCode() & int.MaxValue);
+            int hash = key.GetHashCode();
             int bucketIndex = hash % _buckets.Length;
 
-            //first update the buckets
-            int valueIndex = GetBucketIndex(_buckets[bucketIndex]);
-
-            if (valueIndex >= _freeValueCellIndex) return false;
-
-            while (valueIndex != -1)
+            //find the bucket
+            int indexToValueToRemove = GetBucketIndex(_buckets, bucketIndex);
+       
+            //Part one: look for the actual key in the bucket list if found
+            //we update the bucket list so that it doesn't point anymore
+            //to the cell to remove
+            while (indexToValueToRemove != -1)
             {
-                if (_valuesInfo[valueIndex].hashcode == hash && _valuesInfo[valueIndex].key.CompareTo(key) == 0)
+                if (_valuesInfo[indexToValueToRemove].hashcode == hash 
+                 && _valuesInfo[indexToValueToRemove].key.CompareTo(key) == 0)
                 {
-                    //se il bucket index punta direttamente alla cela da rimuovere
-                    if (GetBucketIndex(_buckets[bucketIndex]) == valueIndex) //facciamo puntare alla cella precedente, potrebbe essere -1! significa che il backet è vuoto
-                        _buckets[bucketIndex] = _valuesInfo[valueIndex].previous + 1;
-                    else
+                    //if the key is found and the bucket points directly to the node to remove
+                    if (GetBucketIndex(_buckets, bucketIndex) == indexToValueToRemove)
                     {
-                        if (_valuesInfo[valueIndex].previous == -1 && _valuesInfo[valueIndex].next == -1)
-                            _buckets[bucketIndex] = -1 + 1;
-                        else
-                        {
-                            UpdateLinkedList(valueIndex, _valuesInfo);
-                        }
+                        //the bucket will point to the previous cell. if a previous cell exists
+                        //its next pointer must be updated!
+                        //<--- iteration order  
+                        //                      B(ucket points always to the last one)
+                        //   ------- ------- -------
+                        //   |  1  | |  2  | |  3  | //bucket cannot have next, only previous
+                        //   ------- ------- -------
+                        //--> insert order
+                        SetBucketIndex(_buckets, bucketIndex, _valuesInfo[indexToValueToRemove].previous);
                     }
+                    else
+                        DBC.Common.Check.Assert(_valuesInfo[indexToValueToRemove].next != -1, 
+                                                "if the bucket points to another cell, next MUST exists");
+
+                    //update the previous and next pointers of the previous and next cells (if exist)
+                    UpdateLinkedList(indexToValueToRemove, _valuesInfo);
 
                     break;
                 }
 
-                valueIndex = (_valuesInfo[valueIndex].previous);
+                indexToValueToRemove = _valuesInfo[indexToValueToRemove].previous;
             }
 
-            if (valueIndex == -1) return false;
-
-            _freeValueCellIndex--;
-            //value index è la cella dalla value list da rimuovere, se è l'ultima della lista non c 'èd bisogno di f are altro
-            if (_freeValueCellIndex != valueIndex)
-            {
-                //non dobbiamo lasciare comunque buchi, quindi dobbiamo spostare l'\ultima valueinfo
-                //questo significa cambiare la sua posizione e il puntatore nel bucket
-                //prendiamo il bucket index dell'ultima cella che sostituiremo con quella da rimuovere
+            if (indexToValueToRemove == -1)
+                return false; //not found!
+            
+            //Part two:
+            //At this point nodes pointers and buckets are updated, but the _values array
+            //still has got the value to delete. Remember the goal of this dictionary is to be able
+            //to iterate over the values like an array, so the values array must always be up to date
+            _freeValueCellIndex--; //one less value to iterate
+            //if the cell to remove is the last one in the list, we can perform less operations (no swapping needed)
+            //otherwise we want to move the last value cell over the value to remove
+            
+            if (indexToValueToRemove != _freeValueCellIndex)
+            {   //we can move the last value of both arrays in place of the one to delete.
+                //in order to do so, we need to be sure that the bucket pointer is updated
+                //first we find the index in the bucket list of the pointer that points to the cell
+                //to move
                 var movingBucketIndex = _valuesInfo[_freeValueCellIndex].hashcode % _buckets.Length;
 
-                //se il bucket da muovere punta direttamente alla cella da muovere
-                if (GetBucketIndex(_buckets[movingBucketIndex]) == _freeValueCellIndex)
-                { //lo facciamo puntare alla cella da riempire
-                    _buckets[movingBucketIndex] = valueIndex + 1;
-                }
-                //altrimenti lasciamo le cose come stanno e aggiustiamo i puntatori
+                //if the key is found and the bucket points directly to the node to remove
+                //it must now point to the cell where it's going to be moved
+                if (GetBucketIndex(_buckets, movingBucketIndex) == _freeValueCellIndex)
+                    SetBucketIndex(_buckets, movingBucketIndex, indexToValueToRemove);
+
+                //otherwise it means that there was more than one key with the same hash (collision), so 
+                //we need to update the linked list and its pointers
                 int next = _valuesInfo[_freeValueCellIndex].next;
                 int previous = _valuesInfo[_freeValueCellIndex].previous;
 
+                //they now point to the cell where the last value is moved into
                 if (next != -1)
-                    _valuesInfo[next].previous = valueIndex;
+                    _valuesInfo[next].previous = indexToValueToRemove;
                 if (previous != -1)
-                    _valuesInfo[previous].next = valueIndex;
+                    _valuesInfo[previous].next = indexToValueToRemove;
 
-                _valuesInfo[valueIndex] = _valuesInfo[_freeValueCellIndex];
-                _values[valueIndex] = _values[_freeValueCellIndex];
+                //finally, actually move the values
+                _valuesInfo[indexToValueToRemove] = _valuesInfo[_freeValueCellIndex];
+                _values[indexToValueToRemove] = _values[_freeValueCellIndex];
             }
 
             return true;
@@ -327,25 +347,36 @@ namespace Svelto.DataStructures.Experimental
             }
         }
 
-        static int GetBucketIndex(int i)
+        //I store all the index with an offset + 1, so that in the bucket
+        //list 0 means actually not existing. 
+        static void SetBucketIndex(int[] buckets, int i, int value)
         {
-            return i - 1;
+            buckets[i] = value + 1;
+        }
+        
+        //When read the offset must
+        //be offset by -1 again to be the real one. In this way
+        //I avoid to initialize the array to -1
+        static int GetBucketIndex(int[] buckets, int i)
+        {
+            return buckets[i] - 1;
         }
 
         protected bool FindIndex(TKey key, out uint findIndex)
         {
-            int hash        = (key.GetHashCode() & int.MaxValue);
+            int hash        = key.GetHashCode();
             int bucketIndex = hash % _buckets.Length;
 
-            int valueIndex = GetBucketIndex(_buckets[bucketIndex]);
+            int valueIndex = GetBucketIndex(_buckets, bucketIndex);
 
+            //even if we found an existing value we need to be sure it's the one we requested
             while (valueIndex != -1)
             {
-                //for some reason this is way faster than using
-                //Comparer<TKey>.default, should investigate
+                //for some reason this is way faster than using Comparer<TKey>.default, should investigate
                 if (_valuesInfo[valueIndex].hashcode == hash && 
                     _valuesInfo[valueIndex].key.CompareTo(key) == 0)
                 {
+                    //this is the one
                     findIndex = (uint) valueIndex;
                     return true;
                 }
@@ -367,10 +398,10 @@ namespace Svelto.DataStructures.Experimental
 
         static bool FindIndex(TKey key, int[] buckets, Node[] valuesInfo, out uint findIndex)
         {
-            int hash        = (key.GetHashCode() & int.MaxValue);
+            int hash        = key.GetHashCode();
             int bucketIndex = hash % buckets.Length;
 
-            int valueIndex = GetBucketIndex(buckets[bucketIndex]);
+            int valueIndex = GetBucketIndex(buckets, bucketIndex);
 
             while (valueIndex != -1)
             {
@@ -442,18 +473,18 @@ namespace Svelto.DataStructures.Experimental
             int _index;
         }
 
-        internal struct Node
+        struct Node
         {
             public readonly TKey   key;
             public readonly int hashcode;
             public          int previous;
             public          int next;
 
-            public Node(ref TKey key, int hash, int v)
+            public Node(ref TKey key, int hash, int previousNode)
             {
                 this.key = key;
                 hashcode = hash;
-                previous = v;
+                previous = previousNode;
                 next     = -1;
             }
 
@@ -483,7 +514,7 @@ namespace Svelto.DataStructures.Experimental
                 throw new NotImplementedException();
             }
             
-            public FasterDictionaryKeyEnumerator<TKey> GetEnumerator()
+            public FasterDictionaryKeyEnumerator GetEnumerator()
             {
                 throw new NotImplementedException();
             }
@@ -519,7 +550,7 @@ namespace Svelto.DataStructures.Experimental
             Node[] _keys;
         }
         
-        public struct FasterDictionaryKeyEnumerator<TKey>:IEnumerator<TKey>
+        public struct FasterDictionaryKeyEnumerator:IEnumerator<TKey>
         {
             public bool MoveNext()
             {
