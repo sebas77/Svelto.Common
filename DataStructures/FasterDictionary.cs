@@ -194,11 +194,14 @@ namespace Svelto.DataStructures.Experimental
 
                 //oops collision!
                 _collisions++;
-                //create a new node which previous index points to the existing one
+                //create a new node which previous index points to node currently pointed in the bucket
                 _valuesInfo[_freeValueCellIndex] = new Node(ref key, hash, valueIndex);
-                //Important: the new one is always the one in the bucket
-                //so I can assume that the one pointing in the bucket is always the last value added
+                //update the next of the existing cell to point to the new one
+                //old one -> new one | old one <- next one
                 _valuesInfo[valueIndex].next = _freeValueCellIndex;
+                //Important: the new node is always the one that will be pointed by the bucket cell
+                //so I can assume that the one pointed by the bucket is always the last value added
+                //(next = -1)
             }
 
             //item with this bucketIndex will point to the last value created
@@ -217,7 +220,7 @@ namespace Svelto.DataStructures.Experimental
                 Array.Resize(ref _valuesInfo, 
                     HashHelpers.ExpandPrime(_freeValueCellIndex));
             }
-
+            
             //too many collisions?
             if (_collisions > _buckets.Length)
             {
@@ -227,37 +230,38 @@ namespace Svelto.DataStructures.Experimental
 
                 _collisions = 0;
 
-                //we need to get all the hash code of all the values
-                //stored so far and spread them over the new bucket
+                //we need to get all the hash code of all the values stored so far and spread them over the new bucket
                 //length
                 for (int newValueIndex = 0; newValueIndex < _freeValueCellIndex; newValueIndex++)
                 {
-                    //get the original hash code and find the new bucketIndex
+                    //get the original hash code and find the new bucketIndex due to the new length
                     bucketIndex = _valuesInfo[newValueIndex].hashcode % _buckets.Length;
-                    //bucketsIndex can be -1 or a next value. If it's -1
-                    //means no collisions. If there is collision, it will
-                    //link to the next value index and the bucket will
-                    //be updated with the current one. In this way we can
-                    //rebuild the linkedlist.
-                    valueIndex = GetValueIndexFromBuckets(_buckets, bucketIndex);
-                    if (valueIndex != -1)
-                    {   //oops a value was alread being pointed by this cell in the new bucket list,
+                    //bucketsIndex can be -1 or a next value. If it's -1 means no collisions. If there is collision,
+                    //we create a new node which prev points to the old one. Old one next points to the new one.
+                    //the bucket will now points to the new one
+                    //In this way we can rebuild the linkedlist.
+                    //get the current valueIndex, it's -1 if no collision happens
+                    int existingValueIndex = GetValueIndexFromBuckets(_buckets, bucketIndex);
+                    //update the bucket index to the index of the current item that share the bucketIndex
+                    //(last found is always the one in the bucket)
+                    SetValueIndexInBuckets(_buckets, bucketIndex, newValueIndex);
+                    if (existingValueIndex != -1)
+                    {   //oops a value was already being pointed by this cell in the new bucket list,
                         //it means there is a collision, problem
                         _collisions++;
                         //the bucket will point to this value, so 
                         //the previous index will be used as previous for the new value.
-                        _valuesInfo[newValueIndex].previous      = valueIndex;
+                        _valuesInfo[newValueIndex].previous = existingValueIndex;
+                        _valuesInfo[newValueIndex].next = -1;
                         //and update the previous next index to the new one
-                        _valuesInfo[valueIndex].next = newValueIndex;
+                        _valuesInfo[existingValueIndex].next = newValueIndex;
                     }
                     else
-                    { //ok nothing was indexed
+                    { //ok nothing was indexed, the bucket was empty. We need to update the previous
+                        //values of next and previous
                         _valuesInfo[newValueIndex].next     = -1;
                         _valuesInfo[newValueIndex].previous = -1;
                     }
-
-                    //update the bucket index to valueIndex 
-                    SetValueIndexInBuckets(_buckets, bucketIndex, newValueIndex);
                 }
             }
 
@@ -283,6 +287,8 @@ namespace Svelto.DataStructures.Experimental
                     //if the key is found and the bucket points directly to the node to remove
                     if (GetValueIndexFromBuckets(_buckets, bucketIndex) == indexToValueToRemove)
                     {
+                        DBC.Common.Check.Require(_valuesInfo[indexToValueToRemove].next == -1,
+                                                "if the bucket points to the cell, next MUST NOT exists");
                         //the bucket will point to the previous cell. if a previous cell exists
                         //its next pointer must be updated!
                         //<--- iteration order  
@@ -294,10 +300,9 @@ namespace Svelto.DataStructures.Experimental
                         SetValueIndexInBuckets(_buckets, bucketIndex, _valuesInfo[indexToValueToRemove].previous);
                     }
                     else
-                        DBC.Common.Check.Assert(_valuesInfo[indexToValueToRemove].next != -1, 
+                        DBC.Common.Check.Require(_valuesInfo[indexToValueToRemove].next != -1,
                                                 "if the bucket points to another cell, next MUST exists");
 
-                    //update the previous and next pointers of the previous and next cells (if exist)
                     UpdateLinkedList(indexToValueToRemove, _valuesInfo);
 
                     break;
@@ -434,7 +439,7 @@ namespace Svelto.DataStructures.Experimental
         static void UpdateLinkedList(int index, Node[] valuesInfo)
         {
             int next = valuesInfo[index].next;
-            int previous = valuesInfo[index].previous;
+            int previous = valuesInfo[index].previous; 
 
             if (next != -1)
                 valuesInfo[next].previous = previous;
