@@ -1,72 +1,78 @@
 using System;
+using System.Collections.Generic;
 #if NETFX_CORE
 using Windows.System.Diagnostics;
 #else
 using System.Diagnostics;
 #endif
 using System.Text;
+using Svelto.DataStructures;
 
 namespace Utility
 {
     public static class Console
     {
-        static StringBuilder _stringBuilder = new StringBuilder(256);
+        static readonly StringBuilder _stringBuilder = new StringBuilder(256);
+        static readonly FasterList<Svelto.DataStructures.WeakReference<ILogger>> _loggers;
 
-        public static ILogger logger;
-
-        public static volatile bool BatchLog = false;
-
-        //Hack, have to find the right solution
-        public static Action<Exception, string, string> onException;
-
+        static readonly ILogger _standardLogger;
+        
         static Console()
         {
 #if UNITY_5_3_OR_NEWER || UNITY_5
-            logger = new SlowLoggerUnity();
-            onException = (e, message, stack) =>
-                {
-                    UnityEngine.Debug.LogException(e, null);
-                };
+            _loggers = new FasterList<Svelto.DataStructures.WeakReference<ILogger>>();
+            _standardLogger = new SlowUnityLogger();
 #else
-            logger = new SimpleLogger();
+            _standardLogger = new SimpleLogger();
 #endif
+            _loggers.Add(new Svelto.DataStructures.WeakReference<ILogger>(_standardLogger));
         }
 
+        public static void SetLogger(ILogger log)
+        {
+            _loggers[0] = new Svelto.DataStructures.WeakReference<ILogger>(log);
+        }
+        
+        public static void AddLogger(ILogger log)
+        {
+            _loggers.Add(new Svelto.DataStructures.WeakReference<ILogger>(log));
+        }
+
+        static void Log(string                                                txt,
+                        string                                                stack,
+                        LogType                                               type,
+                        System.Collections.Generic.Dictionary<string, string> extraData = null)
+        {
+            for (int i = 0; i < _loggers.Count; i++)
+            {
+                if (_loggers[i].IsValid == true)
+                    _loggers[i].Target.Log(txt, stack, type, extraData);
+                else
+                {
+                    _loggers.UnorderedRemoveAt(i);
+                    i--;
+                }
+            }
+        }
+        
         public static void Log(string txt)
         {
-            logger.Log(txt);
+            Log(txt, null, LogType.Log);
         }
 
-        public static void LogError(string txt)
+        public static void LogError(string txt, string stack = null,
+                                    System.Collections.Generic.Dictionary<string, string> extraData = null)
         {
-            string toPrint;
-
             lock (_stringBuilder)
             {
                 _stringBuilder.Length = 0;
                 _stringBuilder.Append("-!!!!!!-> ");
                 _stringBuilder.Append(txt);
 
-                toPrint = _stringBuilder.ToString();
+                var toPrint = _stringBuilder.ToString();
+                
+                Log(toPrint, stack, LogType.Error);
             }
-
-            logger.Log(toPrint, null, LogType.Error);
-        }
-
-        public static void LogError(string txt, string stack)
-        {
-            string toPrint;
-
-            lock (_stringBuilder)
-            {
-                _stringBuilder.Length = 0;
-                _stringBuilder.Append("-!!!!!!-> ");
-                _stringBuilder.Append(txt);
-
-                toPrint = _stringBuilder.ToString();
-            }
-
-            logger.Log(toPrint, stack, LogType.Error);
         }
 
         public static void LogException(Exception e)
@@ -92,10 +98,9 @@ namespace Utility
                 }
 
                 toPrint = _stringBuilder.ToString();
+                
+                Log(toPrint, stackTrace, LogType.Exception);
             }
-
-            if (onException != null)
-                onException(e, toPrint, stackTrace);
         }
 
         public static void LogWarning(string txt)
@@ -111,7 +116,7 @@ namespace Utility
                 toPrint = _stringBuilder.ToString();
             }
 
-            logger.Log(toPrint, null, LogType.Warning);
+            Log(toPrint, null, LogType.Warning);
         }
 
         /// <summary>

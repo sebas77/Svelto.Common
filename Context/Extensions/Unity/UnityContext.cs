@@ -39,11 +39,11 @@ public class UnityContext<T>: UnityContext where T:class, IUnityCompositionRoot,
             StartCoroutine(WaitForFrameworkInitialization());
     }
 
-    IEnumerator WaitForFrameworkInitialization()
+    protected virtual IEnumerator WaitForFrameworkInitialization()
     {
         //let's wait until the end of the frame, so we are sure that all the awake and starts are called
         yield return new WaitForEndOfFrame();
-
+        
         _applicationRoot.OnContextInitialized();
     }
 
