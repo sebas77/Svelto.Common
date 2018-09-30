@@ -19,8 +19,8 @@ namespace Utility
         
         static Console()
         {
-#if UNITY_5_3_OR_NEWER || UNITY_5
             _loggers = new FasterList<Svelto.DataStructures.WeakReference<ILogger>>();
+#if UNITY_5_3_OR_NEWER || UNITY_5
             _standardLogger = new SlowUnityLogger();
 #else
             _standardLogger = new SimpleLogger();
