@@ -19,8 +19,8 @@ namespace Utility
         
         static Console()
         {
-            _loggers = new FasterList<Svelto.DataStructures.WeakReference<ILogger>>();
 #if UNITY_5_3_OR_NEWER || UNITY_5
+            _loggers = new FasterList<Svelto.DataStructures.WeakReference<ILogger>>();
             _standardLogger = new SlowUnityLogger();
 #else
             _standardLogger = new SimpleLogger();
@@ -41,7 +41,7 @@ namespace Utility
         static void Log(string                                                txt,
                         string                                                stack,
                         LogType                                               type,
-                        System.Collections.Generic.Dictionary<string, string> extraData = null)
+                        Dictionary<string, string> extraData = null)
         {
             for (int i = 0; i < _loggers.Count; i++)
             {
@@ -61,7 +61,7 @@ namespace Utility
         }
 
         public static void LogError(string txt, string stack = null,
-                                    System.Collections.Generic.Dictionary<string, string> extraData = null)
+                                    Dictionary<string, string> extraData = null)
         {
             lock (_stringBuilder)
             {
