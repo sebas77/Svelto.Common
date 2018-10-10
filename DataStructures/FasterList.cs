@@ -806,6 +806,13 @@ namespace Svelto.DataStructures
             if (_count < _buffer.Length)
                 Resize(_count);
         }
+        
+        public void TrimCount(int newCount) 
+        {
+            DBC.Common.Check.Require(_count > newCount, "the new length must be less than the current one");
+
+            _count = newCount;
+        }
 
         public bool Reuse<U>(int index, out U result)
             where U:class, T

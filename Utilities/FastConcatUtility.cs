@@ -62,38 +62,4 @@ public static class FastConcatUtility
             return _stringBuilder.ToString();
         }
     }
-
-    public static string FastJoin(this string[] str)
-    {
-        lock (_stringBuilder)
-        {
-            _stringBuilder.Length = 0;
-
-            for (int i = 0; i < str.Length; i++)
-                _stringBuilder.Append(str[i]);
-
-            return _stringBuilder.ToString();
-        }
-    }
-
-    public static string FastJoin(this string[] str, string str1)
-    {
-        lock (_stringBuilder)
-        {
-            _stringBuilder.Length = 0;
-
-            for (int i = 0; i < str.Length; i++)
-                _stringBuilder.Append(str[i]);
-
-            _stringBuilder.Append(str1);
-
-            return _stringBuilder.ToString();
-        }
-    }
-}
-
-namespace Utility
-{
-#if UNITY_5 || UNITY_5_3_OR_NEWER
-#endif
 }

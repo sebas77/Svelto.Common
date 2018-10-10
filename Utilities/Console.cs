@@ -83,7 +83,7 @@ namespace Utility
             lock (_stringBuilder)
             {
                 _stringBuilder.Length = 0;
-                _stringBuilder.Append("-!!!!!!-> ").Append(e.Message);
+                _stringBuilder.Append("-******-> ").Append(e.Message);
 
                 stackTrace = e.StackTrace;
 
