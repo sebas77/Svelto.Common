@@ -43,7 +43,7 @@ namespace Svelto.Context
                 }
                 catch (Exception e)
                 {
-                    Utility.Console.LogException(e);
+                    Svelto.Utilities.Console.LogException(e);
                 }
 
             _toDeinitialize = null;
@@ -63,7 +63,7 @@ namespace Svelto.Context
                 }
                 catch (Exception e)
                 {
-                    Utility.Console.LogException(e);
+                    Svelto.Utilities.Console.LogException(e);
                 }
 
             _toInitialize = null;

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Utility
+namespace Svelto.Utilities
 {
     public class SimpleLogger : ILogger
     {

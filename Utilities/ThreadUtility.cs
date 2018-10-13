@@ -16,7 +16,6 @@ namespace Svelto.Utilities
 #endif
         }
 
-
         public static void Yield()
         {
 #if NETFX_CORE && !NET_STANDARD_2_0 && !NETSTANDARD2_0
@@ -35,6 +34,24 @@ namespace Svelto.Utilities
 #elif NET_4_6 || NET_STANDARD_2_0 || NETSTANDARD2_0
             Thread.Sleep(1); 
 #endif
+        }
+
+        public static void Spin()
+        {
+            Thread.SpinWait(10000);
+        }
+
+        public static void Wait(int quickIterations)
+        {
+            if (quickIterations < 10000)
+            {
+                if (quickIterations < 1)
+                    ThreadUtility.Spin();
+                else
+                    ThreadUtility.Yield();
+            }
+            else
+                ThreadUtility.TakeItEasy();
         }
     }
 

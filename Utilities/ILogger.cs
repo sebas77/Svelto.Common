@@ -1,4 +1,4 @@
-namespace Utility
+namespace Svelto.Utilities
 {
     public enum LogType
     {

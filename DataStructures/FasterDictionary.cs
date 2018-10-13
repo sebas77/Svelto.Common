@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -519,7 +519,6 @@ namespace Svelto.DataStructures.Experimental
         {
             internal FasterDictionaryKeys(FasterDictionary<TKey, TValue> dic):this()
             {
-                _keys = dic._valuesInfo;
             }
 
             IEnumerator<TKey> IEnumerable<TKey>.GetEnumerator()
@@ -564,8 +563,6 @@ namespace Svelto.DataStructures.Experimental
 
             public int Count { get; }
             public bool IsReadOnly { get; }
-            
-            Node[] _keys;
         }
         
         public struct FasterDictionaryKeyEnumerator:IEnumerator<TKey>

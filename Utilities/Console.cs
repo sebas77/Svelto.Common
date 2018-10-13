@@ -8,7 +8,7 @@ using System.Diagnostics;
 using System.Text;
 using Svelto.DataStructures;
 
-namespace Utility
+namespace Svelto.Utilities
 {
     public static class Console
     {
