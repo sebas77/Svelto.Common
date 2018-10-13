@@ -74,7 +74,27 @@ namespace Svelto.Common
         public void Dispose()
         {}
 
-        public DisposableStruct Sample()
+        public DisposableStruct Sample(string samplerName)
+        {
+            return new DisposableStruct();
+        }
+
+        public struct DisposableStruct : IDisposable
+        {
+            public void Dispose()
+            {}
+        }
+    }
+    
+    public struct PlatformProfilerMT : IDisposable
+    {
+        public PlatformProfilerMT(string name)
+        {}
+
+        public void Dispose()
+        {}
+
+        public DisposableStruct Sample(string samplerName)
         {
             return new DisposableStruct();
         }
