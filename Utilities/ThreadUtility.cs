@@ -36,19 +36,11 @@ namespace Svelto.Utilities
 #endif
         }
 
-        public static void Spin()
-        {
-            Thread.SpinWait(10000);
-        }
-
         public static void Wait(int quickIterations)
         {
             if (quickIterations < 10000)
             {
-                if (quickIterations < 1)
-                    ThreadUtility.Spin();
-                else
-                    ThreadUtility.Yield();
+                ThreadUtility.Yield();
             }
             else
                 ThreadUtility.TakeItEasy();
