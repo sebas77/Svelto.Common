@@ -31,7 +31,7 @@ namespace Svelto.Utilities
         {
 #if NETFX_CORE && !NET_STANDARD_2_0 && !NETSTANDARD2_0
             throw new Exception("Svelto doesn't support UWP without NET_STANDARD_2_0 support");
-#elif NET_4_6 || NET_STANDARD_2_0 || NETSTANDARD2_0
+#else
             Thread.Sleep(1); 
 #endif
         }
@@ -39,11 +39,9 @@ namespace Svelto.Utilities
         public static void Wait(int quickIterations)
         {
             if (quickIterations < 10000)
-            {
-                ThreadUtility.Yield();
-            }
+                Yield();
             else
-                ThreadUtility.TakeItEasy();
+                TakeItEasy();
         }
     }
 
