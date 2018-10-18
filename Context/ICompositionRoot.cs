@@ -4,5 +4,6 @@ namespace Svelto.Context
     {
         void OnContextInitialized();
         void OnContextDestroyed();
+        void OnContextCreated<T>(T contextHolder);
     }
 }

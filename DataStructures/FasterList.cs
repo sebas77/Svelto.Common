@@ -809,7 +809,7 @@ namespace Svelto.DataStructures
         
         public void TrimCount(int newCount) 
         {
-            DBC.Common.Check.Require(_count > newCount, "the new length must be less than the current one");
+            DBC.Common.Check.Require(_count >= newCount, "the new length must be less than the current one");
 
             _count = newCount;
         }

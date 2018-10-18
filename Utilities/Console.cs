@@ -36,12 +36,9 @@ namespace Svelto.Utilities
         public static void AddLogger(ILogger log)
         {
             _loggers.Add(new Svelto.DataStructures.WeakReference<ILogger>(log));
-        }
-
-        static void Log(string                                                txt,
-                        string                                                stack,
-                        LogType                                               type,
-                        Dictionary<string, string> extraData = null)
+        } 
+ 
+        static void Log(string  txt, string  stack, LogType type, Dictionary<string, string> extraData = null)
         {
             for (int i = 0; i < _loggers.Count; i++)
             {
@@ -71,7 +68,7 @@ namespace Svelto.Utilities
 
                 var toPrint = _stringBuilder.ToString();
                 
-                Log(toPrint, stack, LogType.Error);
+                Log(toPrint, stack, LogType.Error, extraData);
             }
         }
 
