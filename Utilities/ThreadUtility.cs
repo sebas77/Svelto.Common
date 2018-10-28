@@ -36,10 +36,21 @@ namespace Svelto.Utilities
 #endif
         }
 
-        public static void Wait(int quickIterations)
+        /// <summary>
+        /// Yield the thread every so often
+        /// </summary>
+        /// <param name="quickIterations">will be increment by 1</param>
+        /// <param name="frequency">must be multipel of 2</param>
+        public static bool Wait(ref int quickIterations, int frequency = 256)
         {
-            if ((quickIterations & 255) == 0)
+            if ((quickIterations++ & (frequency - 1)) == 0)
+            {
                 Yield();
+
+                return true;
+            }
+
+            return false;
         }
     }
 
