@@ -706,12 +706,12 @@ namespace Svelto.DataStructures
 
         public void Resize(int newSize)
         {
+            if (newSize == _buffer.Length) return;
+            
             if (newSize < MIN_SIZE)
                 newSize = MIN_SIZE;
 
             Array.Resize(ref _buffer, newSize);
-
-            _count = newSize;
         }
 
         public void Sort(IComparer<T> comparer)

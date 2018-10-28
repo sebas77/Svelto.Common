@@ -38,10 +38,8 @@ namespace Svelto.Utilities
 
         public static void Wait(int quickIterations)
         {
-            if (quickIterations < 10000)
+            if ((quickIterations & 255) == 0)
                 Yield();
-            else
-                TakeItEasy();
         }
     }
 

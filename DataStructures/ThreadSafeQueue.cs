@@ -110,6 +110,8 @@ namespace Svelto.DataStructures
             LockQ.EnterWriteLock();
             try
             {
+                list.ResizeIfSmaller(list.Count + m_Queue.Count);
+                
                 while (m_Queue.Count > 0)
                     list.Add(m_Queue.Dequeue());
             }
