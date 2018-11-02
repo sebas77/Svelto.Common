@@ -9,7 +9,7 @@ namespace Svelto.Utilities
     {
         public static void MemoryBarrier()
         {
-#if NETFX_CORE || NET_4_6
+#if NET_4_6 || NET_STANDARD_2_0 || NETSTANDARD2_0
             Interlocked.MemoryBarrier();
 #else
             Thread.MemoryBarrier();
@@ -52,9 +52,41 @@ namespace Svelto.Utilities
 
             return false;
         }
+
+        public static bool VolatileRead(ref bool val)
+        {
+#if NET_4_6 || NET_STANDARD_2_0 || NETSTANDARD2_0
+            return Volatile.Read(ref val);
+#else
+            Thread.MemoryBarrier();
+
+            return val;
+#endif
+        }
+        
+        public static int VolatileRead(ref int val)
+        {
+#if NET_4_6 || NET_STANDARD_2_0 || NETSTANDARD2_0
+            return Volatile.Read(ref val);
+#else
+            Thread.MemoryBarrier();
+
+            return val;
+#endif
+        }
+
+        public static void VolatileWrite(ref bool var, bool val)
+        {
+#if NET_4_6 || NET_STANDARD_2_0 || NETSTANDARD2_0
+            Volatile.Write(ref var, val);
+#else
+            var = val;
+            Thread.MemoryBarrier();
+#endif
+        }
     }
 
-#if NETFX_CORE || NET_4_6
+#if NET_4_6 || NET_STANDARD_2_0 || NETSTANDARD2_0
     public sealed class ManualResetEventEx
     {
         readonly ManualResetEventSlim _manualReset = new ManualResetEventSlim(false);

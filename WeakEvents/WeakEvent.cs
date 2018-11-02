@@ -56,7 +56,7 @@ namespace Svelto.WeakEvents
             for (int i = 0; i < _toRemove.Count; i++)
                 RemoveInternal(_toRemove[i].Key, _toRemove[i].Value);
             
-            _toRemove.FastClear();
+            _toRemove.Clear();
         }
 
         protected void RemoveInternal(object thisObject, MethodInfo thisMethod)
@@ -84,6 +84,11 @@ namespace Svelto.WeakEvents
         public WeakEvent()
         {
             _invoke = InvokeDelegate;
+        }
+        
+        public void Clear()
+        {
+            _subscribers.Clear();
         }
 
         protected readonly FasterList<WeakActionBase> 

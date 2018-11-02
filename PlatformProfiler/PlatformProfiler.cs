@@ -2,8 +2,8 @@ using System;
 
 namespace Svelto.Common
 {
-#if UNITY_5_3_OR_NEWER && PLATFORM_PROFILER    
-    public struct PlatformProfilerMT : IPlatformProfiler
+#if UNITY_5_3_OR_NEWER && ENABLE_PLATFORM_PROFILER    
+    public struct PlatformProfilerMT : IDisposable
     {
         readonly UnityEngine.Profiling.CustomSampler sampler;
 
@@ -39,8 +39,8 @@ namespace Svelto.Common
         }
     }
     
-    public struct PlatformProfiler : IPlatformProfiler
-    {
+    public struct PlatformProfiler : IDisposable
+         {
         public PlatformProfiler(string name):this()
         {}
 
