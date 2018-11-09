@@ -179,12 +179,12 @@ namespace Svelto.DataStructures
 
         IEnumerator<T> IEnumerable<T>.GetEnumerator()
         {
-            return GetEnumerator();
+            throw new NotImplementedException();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return GetEnumerator();
+            throw new NotImplementedException();
         }
 
         readonly FasterList<T> _list;
@@ -455,12 +455,12 @@ namespace Svelto.DataStructures
 
         IEnumerator<U> IEnumerable<U>.GetEnumerator()
         {
-            return GetEnumerator();
+            throw new NotImplementedException();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return GetEnumerator();
+            throw new NotImplementedException();
         }
 
         readonly FasterList<T> _list;
@@ -773,12 +773,12 @@ namespace Svelto.DataStructures
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return GetEnumerator();
+            throw new NotImplementedException();
         }
 
         IEnumerator<T> IEnumerable<T>.GetEnumerator()
         {
-            return GetEnumerator();
+            throw new NotImplementedException();
         }
 
         void AllocateMore()

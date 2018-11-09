@@ -40,12 +40,16 @@ namespace Svelto.Common
     }
     
     public struct PlatformProfiler : IDisposable
-         {
-        public PlatformProfiler(string name):this()
-        {}
+    {
+        public PlatformProfiler(string name) : this()
+        {
+            UnityEngine.Profiling.Profiler.BeginSample(name);
+        }
 
         public void Dispose()
-        {}
+        {
+            UnityEngine.Profiling.Profiler.EndSample();
+        }
 
         public DisposableStruct Sample(string samplerName)
         {
