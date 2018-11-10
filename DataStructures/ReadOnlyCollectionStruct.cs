@@ -4,14 +4,17 @@ using System.Collections.Generic;
 
 namespace Svelto.DataStructures
 {
-    public struct ReadOnlyCollectionStruct<T> : ICollection<T>
+    public struct ReadOnlyCollectionStruct<T> : ICollection<T>, IEnumerable<T>, IEnumerable
     {
-        public static ReadOnlyCollectionStruct<T> DefaultList = new ReadOnlyCollectionStruct<T>(new T[0], 0);
-
         public ReadOnlyCollectionStruct(T[] values, int count)
         {
             _values = values;
             _count = count;
+        }
+
+        public ReadOnlyCollectionStructEnumerator<T> GetEnumerator()
+        {
+            return new ReadOnlyCollectionStructEnumerator<T>(_values, _count);
         }
 
         IEnumerator<T> IEnumerable<T>.GetEnumerator()
@@ -19,7 +22,7 @@ namespace Svelto.DataStructures
             throw new NotImplementedException();
         }
 
-        public IEnumerator GetEnumerator()
+        IEnumerator IEnumerable.GetEnumerator()
         {
             throw new NotImplementedException();
         }
@@ -81,5 +84,62 @@ namespace Svelto.DataStructures
         {
             get { return _values[i]; }
         }
+    }
+    
+    public struct ReadOnlyCollectionStructEnumerator<T>:IEnumerator<T>
+    {
+        public ReadOnlyCollectionStructEnumerator(T[] values, int count) : this()
+        {
+            _index  = 0;
+            _values = values;
+            _count = count;
+        }
+
+        public bool MoveNext()
+        {
+            if (_index < _count)
+            {
+                _current = _values[_index++];
+                return true;
+            }
+
+            return false;
+        }
+        
+        bool IEnumerator.MoveNext()
+        {
+            return MoveNext();
+        }
+        
+        void IEnumerator.Reset()
+        {
+            Reset();
+        }
+
+        public void Reset()
+        {
+            _index = 0;
+        }
+        
+        public T Current
+        {
+            get { return _current; }
+        }
+
+        T IEnumerator<T>.Current
+        {
+            get { return _current; }
+        }
+
+        object IEnumerator.Current
+        {
+            get { return _current; }
+        }
+        public void   Dispose() { }
+
+        readonly T[] _values;
+        T            _current;
+        int          _index;
+        int          _count;
     }
 }
