@@ -167,3 +167,19 @@ public static class NetFXCoreWrappers
 #endif
     }
 }
+
+public static class IsCompilerGenerated<T>
+{
+    static IsCompilerGenerated()
+    {
+        #if NETFX_CORE
+             var attr = typeof(T).GetTypeInfo().GetCustomAttribute(typeof(CompilerGeneratedAttribute));
+        
+             isCompilerGenerated = attr != null;
+        #else
+             isCompilerGenerated = Attribute.IsDefined(typeof(T), typeof(CompilerGeneratedAttribute));
+        #endif
+    }
+            
+    public static bool isCompilerGenerated;
+}
