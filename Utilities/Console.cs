@@ -75,27 +75,29 @@ namespace Svelto.Utilities
 
         public static void LogException(Exception e)
         {
-            string toPrint;
-            string stackTrace;
-
             lock (_stringBuilder)
             {
                 _stringBuilder.Length = 0;
-                _stringBuilder.Append("-******-> ").Append(e.Message);
+                _stringBuilder.Append("-******-> ").Append(e.GetType()).Append("-<color=cyan>").Append(e.Message)
+                              .Append("</color>");
 
-                stackTrace = e.StackTrace;
+                var stackTrace = e.StackTrace;
 
                 if (e.InnerException != null)
                 {
+                    _stringBuilder.Append("-").Append(stackTrace);
+                    
                     e = e.InnerException;
 
-                    _stringBuilder.Append(" Inner Message: ").Append(e.Message).Append(" Inner Stacktrace:")
-                        .Append(e.StackTrace);
+                    _stringBuilder.Append("<color=orange>Inner exception:</color>")
+                                  .Append(e.GetType())
+                                  .Append("-<color=cyan>")
+                                  .Append(e.Message).Append("</color>");
 
                     stackTrace = e.StackTrace;
                 }
 
-                toPrint = _stringBuilder.ToString();
+                var toPrint = _stringBuilder.ToString();
                 
                 Log(toPrint, stackTrace, LogType.Exception);
             }
