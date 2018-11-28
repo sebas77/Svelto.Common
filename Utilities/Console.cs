@@ -39,7 +39,7 @@ namespace Svelto.Utilities
             _loggers.Add(new Svelto.DataStructures.WeakReference<ILogger>(log));
         } 
  
-        static void Log(string  txt, string  stack, LogType type, Dictionary<string, string> extraData = null)
+        static void Log(string txt, string stack, LogType type, Dictionary<string, string> extraData = null)
         {
             for (int i = 0; i < _loggers.Count; i++)
             {
@@ -58,9 +58,15 @@ namespace Svelto.Utilities
             Log(txt, null, LogType.Log);
         }
 
-        public static void LogError(string txt, string stack = null,
-                                    Dictionary<string, string> extraData = null)
+        public static void LogError(string txt, Dictionary<string, string> extraData = null)
         {
+            LogError(txt, null, extraData);
+        }
+
+        public static void LogError(string txt, string stack, Dictionary<string, string> extraData = null)
+        {
+            if (stack == null) stack = Environment.StackTrace;
+            
             lock (_stringBuilder)
             {
                 _stringBuilder.Length = 0;
@@ -73,33 +79,50 @@ namespace Svelto.Utilities
             }
         }
 
-        public static void LogException(Exception e)
+        public static void LogException(Exception e, Dictionary<string, string> extraData = null)
         {
+            LogException(String.Empty, e, extraData);
+        }
+        
+        public static void LogException(string message, Exception e, Dictionary<string, string> extraData = null)
+        {
+            if (extraData == null)
+                extraData = new Dictionary<string, string>();
+
             lock (_stringBuilder)
             {
                 _stringBuilder.Length = 0;
-                _stringBuilder.Append("-******-> ").Append(e.GetType()).Append("-<color=cyan>").Append(e.Message)
-                              .Append("</color>");
+                
+                extraData["Exception"] = _stringBuilder.Append(e.GetType()).Append("-<color=cyan>").Append(e.Message)
+                                                       .Append("</color>").ToString();
+                
+                
+                _stringBuilder.Length = 0;
+
+                _stringBuilder.Append("-******-> ").Append(message);
+                
+                var toPrint = _stringBuilder.ToString();
 
                 var stackTrace = e.StackTrace;
 
                 if (e.InnerException != null)
                 {
-                    _stringBuilder.Append("-").Append(stackTrace);
+                    _stringBuilder.Length = 0;
                     
-                    e = e.InnerException;
-
-                    _stringBuilder.Append("<color=orange>Inner exception:</color>")
-                                  .Append(e.GetType())
-                                  .Append("-<color=cyan>")
-                                  .Append(e.Message).Append("</color>");
-
-                    stackTrace = e.StackTrace;
+                    extraData["OuterStackTrace"] = _stringBuilder.Append(e.GetType()).Append("-<color=cyan>").Append(e.Message)
+                                                           .Append("</color>").ToString();
+                    
+                    _stringBuilder.Length = 0;
+                    
+                    extraData["InnerException"] = _stringBuilder.Append("<color=orange>Inner exception:</color>")
+                                                                .Append(e.GetType())
+                                                                .Append("-<color=cyan>")
+                                                                .Append(e.Message).Append("</color>").ToString();
+                    
+                    stackTrace = e.InnerException.StackTrace;
                 }
 
-                var toPrint = _stringBuilder.ToString();
-                
-                Log(toPrint, stackTrace, LogType.Exception);
+                Log(toPrint, stackTrace, LogType.Exception, extraData);
             }
         }
 

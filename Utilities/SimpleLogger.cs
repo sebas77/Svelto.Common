@@ -6,6 +6,9 @@ namespace Svelto.Utilities
     {
         public void Log(string txt, string stack = null, LogType type = LogType.Log, Dictionary<string, string> data = null)
         {
+            if (data != null)
+                txt.FastConcat(" ", DataToString.DetailString(data));
+            
             switch (type)
             {
                 case LogType.Log:
