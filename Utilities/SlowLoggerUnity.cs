@@ -7,8 +7,10 @@ namespace Svelto.Utilities
     {
         public void Log(string txt, string stack = null, LogType type = LogType.Log, Dictionary<string, string> data = null)
         {
+            var dataString = string.Empty;
+            
             if (data != null)
-                txt.FastConcat(" ", DataToString.DetailString(data));
+                 dataString = DataToString.DetailString(data);
             
             switch (type)
             {
@@ -20,7 +22,9 @@ namespace Svelto.Utilities
                     break;
                 case LogType.Exception:
                 case LogType.Error:
-                    UnityEngine.Debug.LogError(stack != null ? "<color=cyan>".FastConcat(txt.FastConcat("</color>", stack)) : "<color=cyan>".FastConcat(txt, "< /color >"));
+                    UnityEngine.Debug.LogError(stack != null ? 
+                                                   "<color=cyan>".FastConcat(txt.FastConcat("</color>", stack)) : 
+                                                   "<color=cyan>".FastConcat(txt, "< /color >").FastConcat(dataString));
                     break;
             }
         }

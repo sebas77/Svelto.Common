@@ -6,8 +6,10 @@ namespace Svelto.Utilities
     {
         public void Log(string txt, string stack = null, LogType type = LogType.Log, Dictionary<string, string> data = null)
         {
+            var dataString = string.Empty;
+            
             if (data != null)
-                txt.FastConcat(" ", DataToString.DetailString(data));
+                dataString = DataToString.DetailString(data);
             
             switch (type)
             {
@@ -19,7 +21,7 @@ namespace Svelto.Utilities
                     break;
                 case LogType.Exception:
                 case LogType.Error:
-                    Console.SystemLog(stack != null ? txt.FastConcat(stack) : txt);
+                    Console.SystemLog(stack != null ? txt.FastConcat(stack).FastConcat(" ", dataString) : txt);
                     break;
             }
         }

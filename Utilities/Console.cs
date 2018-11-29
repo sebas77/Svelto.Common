@@ -67,16 +67,19 @@ namespace Svelto.Utilities
         {
             if (stack == null) stack = Environment.StackTrace;
             
+            string toPrint;
+            
             lock (_stringBuilder)
             {
                 _stringBuilder.Length = 0;
                 _stringBuilder.Append("-!!!!!!-> ");
                 _stringBuilder.Append(txt);
 
-                var toPrint = _stringBuilder.ToString();
-                
-                Log(toPrint, stack, LogType.Error, extraData);
-            }
+                toPrint = _stringBuilder.ToString();
+            }    
+             
+            Log(toPrint, stack, LogType.Error, extraData);
+            
         }
 
         public static void LogException(Exception e, Dictionary<string, string> extraData = null)
@@ -88,42 +91,45 @@ namespace Svelto.Utilities
         {
             if (extraData == null)
                 extraData = new Dictionary<string, string>();
+            
+            string toPrint;
+            string stackTrace;
 
             lock (_stringBuilder)
             {
-                _stringBuilder.Length = 0;
-                
-                extraData["Exception"] = _stringBuilder.Append(e.GetType()).Append("-<color=cyan>").Append(e.Message)
-                                                       .Append("</color>").ToString();
-                
-                
-                _stringBuilder.Length = 0;
+                {
+                    int count = 0;
+                    while (e.InnerException != null)
+                    {
+                        _stringBuilder.Length = 0;
 
-                _stringBuilder.Append("-******-> ").Append(message);
-                
-                var toPrint = _stringBuilder.ToString();
+                        extraData["OuterException".FastConcat(count)] = _stringBuilder.Append(e.GetType())
+                                                                    .Append("-<color=cyan>")
+                                                                    .Append(e.Message).Append("</color>").ToString();
 
-                var stackTrace = e.StackTrace;
+                        _stringBuilder.Length = 0;
 
-                if (e.InnerException != null)
+                        extraData["OuterStackTrace".FastConcat(count)] = _stringBuilder.Append("-<color=cyan>").Append(e.StackTrace)
+                                                                     .Append("</color>").ToString();
+
+                        e = e.InnerException;
+
+                        count++;
+                    }
+                }
+
                 {
                     _stringBuilder.Length = 0;
                     
-                    extraData["OuterStackTrace"] = _stringBuilder.Append(e.GetType()).Append("-<color=cyan>").Append(e.Message)
-                                                           .Append("</color>").ToString();
+                    toPrint = _stringBuilder.Append("-******-> ").Append(message).Append("-Exception-").Append(e.GetType())
+                                  .Append("-<color=cyan>").Append(e.Message)
+                                  .Append("</color>").ToString();
                     
-                    _stringBuilder.Length = 0;
-                    
-                    extraData["InnerException"] = _stringBuilder.Append("<color=orange>Inner exception:</color>")
-                                                                .Append(e.GetType())
-                                                                .Append("-<color=cyan>")
-                                                                .Append(e.Message).Append("</color>").ToString();
-                    
-                    stackTrace = e.InnerException.StackTrace;
+                    stackTrace = e.StackTrace;
                 }
-
-                Log(toPrint, stackTrace, LogType.Exception, extraData);
             }
+            
+            Log(toPrint, stackTrace, LogType.Exception, extraData);
         }
 
         public static void LogWarning(string txt)
