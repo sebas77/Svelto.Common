@@ -561,14 +561,13 @@ namespace Svelto.DataStructures
         /// <typeparam name="U"></typeparam>
         /// <param name="initialSize"></param>
         /// <returns></returns>
-        public static FasterList<T> PreFill<U>(int initialSize) where U:T, new()
+        public static FasterList<T> PreFill<U>(int initialSize) where U: class, T, new()
         {
             var list = new FasterList<T>(initialSize);
 
+            var listCount = list._count;
             for (int i = 0; i < initialSize; i++)
-                list.Add(new U());
-
-            list._count = 0;
+                list[listCount + i] = new U();
 
             return list;
         }
@@ -814,17 +813,28 @@ namespace Svelto.DataStructures
             _count = newCount;
         }
 
-        public bool Reuse<U>(int index, out U result)
-            where U:class, T
+        public bool ReuseOneSlot<U>(out U result) where U:class, T
         {
+            var index = _count;
             result = default(U);
 
             if (index >= _buffer.Length)
                 return false;
 
             result = (U)_buffer[index];
+            _count++;
 
             return _isValueType == true || result != null;
+        }
+        
+        public bool ReuseOneSlot()
+        {
+            if (_count >= _buffer.Length)
+                return false;
+            
+            _count++;
+
+            return true;
         }
 
         public void UnorderedRemoveRange(int groupStart, int groupEnd)
