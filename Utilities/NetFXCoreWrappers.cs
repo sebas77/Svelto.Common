@@ -144,7 +144,7 @@ public static class NetFXCoreWrappers
     public static bool IsCompilerGenerated(this Type t)
     {
 #if NETFX_CORE
-            var attr = t.GetTypeInfo().GetCustomAttribute(typeof(CompilerGeneratedAttribute));
+            var attr = t.GetTypeInfo().GetCustomAttribute(_compilerType);
 
             return attr != null;
 #else
@@ -166,20 +166,4 @@ public static class NetFXCoreWrappers
         return attr;
 #endif
     }
-}
-
-public static class IsCompilerGenerated<T>
-{
-    static IsCompilerGenerated()
-    {
-        #if NETFX_CORE
-             var attr = typeof(T).GetTypeInfo().GetCustomAttribute(typeof(CompilerGeneratedAttribute));
-        
-             isCompilerGenerated = attr != null;
-        #else
-             isCompilerGenerated = Attribute.IsDefined(typeof(T), typeof(CompilerGeneratedAttribute));
-        #endif
-    }
-            
-    public static bool isCompilerGenerated;
 }
