@@ -17,9 +17,9 @@ namespace Svelto.Common
             UnityEngine.Profiling.Profiler.EndThreadProfiling();
         }
 
-        public DisposableStruct Sample(string samplerName)
+        public DisposableStruct Sample(string samplerName, string samplerInfo = null)
         {
-            return new DisposableStruct(UnityEngine.Profiling.CustomSampler.Create(samplerName));
+            return new DisposableStruct(UnityEngine.Profiling.CustomSampler.Create(samplerInfo != null ? samplerName.FastConcat(" ", samplerInfo) : samplerName));
         }
 
         public struct DisposableStruct : IDisposable
@@ -51,9 +51,9 @@ namespace Svelto.Common
             UnityEngine.Profiling.Profiler.EndSample();
         }
 
-        public DisposableStruct Sample(string samplerName)
+        public DisposableStruct Sample(string samplerName, string samplerInfo = null)
         {
-            return new DisposableStruct(samplerName);
+            return new DisposableStruct(samplerInfo != null ? samplerName.FastConcat(" ", samplerInfo) : samplerName);
         }
 
         public struct DisposableStruct : IDisposable
@@ -78,9 +78,9 @@ namespace Svelto.Common
         public void Dispose()
         {}
 
-        public T Sample<T>(string samplerName) where T : new()
+        public DisposableStruct Sample(string samplerName, string sampleInfo = null)
         {
-            return new T();
+            return new DisposableStruct();
         }
         
         public DisposableStruct Sample(string samplerName)
@@ -103,11 +103,6 @@ namespace Svelto.Common
         public void Dispose()
         {}
 
-        public T Sample<T>(string samplerName) where T : new()
-        {
-            return new T();
-        }
-        
         public DisposableStruct Sample(string samplerName)
         {
             return new DisposableStruct();

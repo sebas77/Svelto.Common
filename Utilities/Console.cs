@@ -121,9 +121,9 @@ namespace Svelto.Utilities
                 {
                     _stringBuilder.Length = 0;
                     
-                    toPrint = _stringBuilder.Append("-******-> ").Append(message).Append("-Exception-").Append(e.GetType())
+                    toPrint = _stringBuilder.Append("-******-> ").Append("-Exception-").Append(e.GetType())
                                   .Append("-<color=cyan>").Append(e.Message)
-                                  .Append("</color>").ToString();
+                                  .Append("</color> ").AppendLine().Append(message).ToString();
                     
                     stackTrace = e.StackTrace;
                 }

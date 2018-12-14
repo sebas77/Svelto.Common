@@ -23,8 +23,8 @@ namespace Svelto.Utilities
                 case LogType.Exception:
                 case LogType.Error:
                     UnityEngine.Debug.LogError(stack != null ? 
-                                                   "<color=cyan>".FastConcat(txt.FastConcat("</color> ", stack)) : 
-                                                   "<color=cyan>".FastConcat(txt, "</color> ").FastConcat(dataString));
+                                                   "<color=cyan> ".FastConcat(txt, "</color> ", stack) : 
+                                                   "<color=cyan> ".FastConcat(txt, "</color> ", dataString));
                     break;
             }
         }
