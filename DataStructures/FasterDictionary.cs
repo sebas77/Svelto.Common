@@ -606,3 +606,4 @@ namespace Svelto.DataStructures.Experimental
     }
 }
 
+//todo check https://github.com/benaadams/Ben.TypeDictionary
