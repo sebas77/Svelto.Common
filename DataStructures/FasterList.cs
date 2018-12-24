@@ -842,10 +842,14 @@ namespace Svelto.DataStructures
             Array.Copy(_buffer, groupEnd, _buffer, groupStart, groupEnd - groupStart);
         }
 
-        public void ResizeIfSmaller(int cellCount)
+        public void GrowAndSetCount(int increment)
         {
-            if (_buffer.Length < cellCount)
-                Resize(cellCount);
+            int count = _count + increment;
+            
+            if (_buffer.Length < count)
+                AllocateMore(count);
+
+            _count = count;
         }
 
         T[] _buffer;
