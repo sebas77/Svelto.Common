@@ -85,6 +85,17 @@ namespace Svelto.Utilities
             return val;
 #endif
         }
+        
+        public static float VolatileRead(ref float val)
+        {
+#if NET_4_6 || NET_STANDARD_2_0 || NETSTANDARD2_0
+            return Volatile.Read(ref val);
+#else
+            Thread.MemoryBarrier();
+
+            return val;
+#endif
+        }
 
         public static void VolatileWrite(ref bool var, bool val)
         {
@@ -97,6 +108,16 @@ namespace Svelto.Utilities
         }
         
         public static void VolatileWrite(ref byte var, byte val)
+        {
+#if NET_4_6 || NET_STANDARD_2_0 || NETSTANDARD2_0
+            Volatile.Write(ref var, val);
+#else
+            var = val;
+            Thread.MemoryBarrier();
+#endif
+        }
+
+        public static void VolatileWrite(ref float var, float val)
         {
 #if NET_4_6 || NET_STANDARD_2_0 || NETSTANDARD2_0
             Volatile.Write(ref var, val);
