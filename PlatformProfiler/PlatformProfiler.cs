@@ -1,32 +1,34 @@
 using System;
+using Svelto.DataStructures;
+using UnityEngine.Profiling;
 
 namespace Svelto.Common
 {
 #if UNITY_5_3_OR_NEWER && ENABLE_PLATFORM_PROFILER    
     public struct PlatformProfilerMT : IDisposable
     {
-        readonly UnityEngine.Profiling.CustomSampler sampler;
+        readonly CustomSampler sampler;
 
         public PlatformProfilerMT(string name):this()
         {
-            UnityEngine.Profiling.Profiler.BeginThreadProfiling("Svelto.Tasks", name);
+            Profiler.BeginThreadProfiling("Svelto.Tasks", name);
         }
 
         public void Dispose()
         {
-            UnityEngine.Profiling.Profiler.EndThreadProfiling();
+            Profiler.EndThreadProfiling();
         }
 
         public DisposableStruct Sample(string samplerName, string samplerInfo = null)
         {
-            return new DisposableStruct(UnityEngine.Profiling.CustomSampler.Create(samplerInfo != null ? samplerName.FastConcat(" ", samplerInfo) : samplerName));
+            return new DisposableStruct(samplePool.FetchSampler(samplerInfo != null ? samplerName.FastConcat(" ", samplerInfo) : samplerName));
         }
 
         public struct DisposableStruct : IDisposable
         {
-            readonly UnityEngine.Profiling.CustomSampler _sampler;
+            readonly CustomSampler _sampler;
 
-            public DisposableStruct(UnityEngine.Profiling.CustomSampler customSampler)
+            public DisposableStruct(CustomSampler customSampler)
             {
                 _sampler = customSampler;
                 _sampler.Begin();
@@ -35,6 +37,21 @@ namespace Svelto.Common
             public void Dispose()
             {
                 _sampler.End();
+                samplePool.pool.Enqueue(_sampler);
+            }
+        }
+
+        static class samplePool
+        {
+            public static LockFreeQueue<CustomSampler> pool = new LockFreeQueue<CustomSampler>();
+
+            public static CustomSampler FetchSampler(string name)
+            {
+                CustomSampler sampler;
+                if (pool.Dequeue(out sampler) == false)
+                    return CustomSampler.Create(name);
+
+                return sampler;
             }
         }
     }
@@ -43,12 +60,12 @@ namespace Svelto.Common
     {
         public PlatformProfiler(string name) : this()
         {
-            UnityEngine.Profiling.Profiler.BeginSample(name);
+            Profiler.BeginSample(name);
         }
 
         public void Dispose()
         {
-            UnityEngine.Profiling.Profiler.EndSample();
+            Profiler.EndSample();
         }
 
         public DisposableStruct Sample(string samplerName, string samplerInfo = null)
@@ -60,12 +77,12 @@ namespace Svelto.Common
         {
             public DisposableStruct(string samplerName)
             {
-                UnityEngine.Profiling.Profiler.BeginSample(samplerName);
+                Profiler.BeginSample(samplerName);
             }
 
             public void Dispose()
             {
-                UnityEngine.Profiling.Profiler.EndSample();
+                Profiler.EndSample();
             }
         }
     }
