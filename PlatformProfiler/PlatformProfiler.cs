@@ -1,5 +1,4 @@
 using System;
-using Svelto.DataStructures;
 using UnityEngine.Profiling;
 
 namespace Svelto.Common
@@ -21,7 +20,7 @@ namespace Svelto.Common
 
         public DisposableStruct Sample(string samplerName, string samplerInfo = null)
         {
-            return new DisposableStruct(samplePool.FetchSampler(samplerInfo != null ? samplerName.FastConcat(" ", samplerInfo) : samplerName));
+            return new DisposableStruct(CustomSampler.Create(samplerInfo != null ? samplerName.FastConcat(" ", samplerInfo) : samplerName));
         }
 
         public struct DisposableStruct : IDisposable
@@ -37,21 +36,6 @@ namespace Svelto.Common
             public void Dispose()
             {
                 _sampler.End();
-                samplePool.pool.Enqueue(_sampler);
-            }
-        }
-
-        static class samplePool
-        {
-            public static LockFreeQueue<CustomSampler> pool = new LockFreeQueue<CustomSampler>();
-
-            public static CustomSampler FetchSampler(string name)
-            {
-                CustomSampler sampler;
-                if (pool.Dequeue(out sampler) == false)
-                    return CustomSampler.Create(name);
-
-                return sampler;
             }
         }
     }
