@@ -190,12 +190,18 @@ namespace Svelto.DataStructures
         readonly FasterList<T> _list;
     }
 
-    public struct FasterListThreadSafe<T> : IList<T>
+    public class FasterListThreadSafe<T> : IList<T>
     {
         public FasterListThreadSafe(FasterList<T> list)
         {
             if (list == null) throw new ArgumentException("invalid list");
             _list = list;
+            _lockQ = new ReaderWriterLockSlim();
+        }
+        
+        public FasterListThreadSafe()
+        {
+            _list  = new FasterList<T>();
             _lockQ = new ReaderWriterLockSlim();
         }
 
@@ -376,6 +382,20 @@ namespace Svelto.DataStructures
             finally
             {
                 _lockQ.ExitWriteLock();
+            }
+        }
+        
+        public T[] ToArrayFast(out int count)
+        {
+            _lockQ.EnterReadLock();
+            try
+            {
+                count = _list.Count;
+                return _list.ToArrayFast();
+            }
+            finally
+            {
+                _lockQ.ExitReadLock();
             }
         }
 
