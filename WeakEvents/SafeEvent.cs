@@ -17,7 +17,7 @@ public static class SafeEvent
                 }
                 catch (Exception e)
                 {
-                    Svelto.Utilities.Console.LogException(e);
+                    Svelto.Console.LogException(e);
                 }
             }
         }
@@ -38,7 +38,7 @@ public static class SafeEvent
                 }
                 catch (Exception e)
                 {
-                    Svelto.Utilities.Console.LogException(e);
+                    Svelto.Console.LogException(e);
                 }
             }
         }
