@@ -2,7 +2,11 @@ using System.Text;
 
 public static class FastConcatUtility
 {
+#if DEBUG    
+    static readonly StringBuilder _stringBuilder = new StringBuilder(256, 1024*1024);
+#else    
     static readonly StringBuilder _stringBuilder = new StringBuilder(256);
+#endif
 
     public static string FastConcat<T>(this string str1, T str2)
     {
