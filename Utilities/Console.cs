@@ -1,3 +1,7 @@
+#if !DEBUG || PROFILER
+#define DISABLE_DEBUG
+#endif
+
 using System;
 using System.Collections.Generic;
 #if NETFX_CORE
@@ -147,6 +151,14 @@ namespace Svelto
             }
 
             Log(toPrint, null, LogType.Warning);
+        }
+        
+#if DISABLE_DEBUG
+		[Conditional("__NEVER_DEFINED__")]
+#endif
+        public static void LogWarningDebug(string txt)
+        {
+            LogWarning(txt);
         }
 
         /// <summary>
