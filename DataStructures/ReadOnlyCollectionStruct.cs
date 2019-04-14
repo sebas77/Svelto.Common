@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Svelto.DataStructures
 {
     public struct ReadOnlyCollectionStruct<T> : ICollection<T>, IEnumerable<T>, IEnumerable
     {
-        public ReadOnlyCollectionStruct(T[] values, int count)
+        public ReadOnlyCollectionStruct(T[] values, uint count)
         {
             _values = values;
             _count = count;
@@ -15,6 +16,12 @@ namespace Svelto.DataStructures
         public ReadOnlyCollectionStructEnumerator<T> GetEnumerator()
         {
             return new ReadOnlyCollectionStructEnumerator<T>(_values, _count);
+        }
+        
+        public T this[int i]
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _values[i];
         }
 
         IEnumerator<T> IEnumerable<T>.GetEnumerator()
@@ -57,38 +64,21 @@ namespace Svelto.DataStructures
             throw new NotImplementedException();
         }
 
-        public int Count
-        {
-            get { return _count;  }
-        }
+        public int Count => (int) _count;
 
-        public bool IsReadOnly
-        {
-            get { return true;  }
-        }
+        public bool IsReadOnly => true;
 
-        public bool IsSynchronized
-        {
-            get { return false; }
-        }
-        public object SyncRoot
-        {
-            get { return null; }
-        }
-        
-        T[] _values;
-        int _count;
+        public bool IsSynchronized => false;
 
+        public object SyncRoot => null;
 
-        public T this[int i]
-        {
-            get { return _values[i]; }
-        }
+        readonly T[] _values;
+        readonly uint _count;
     }
     
     public struct ReadOnlyCollectionStructEnumerator<T>:IEnumerator<T>
     {
-        public ReadOnlyCollectionStructEnumerator(T[] values, int count) : this()
+        public ReadOnlyCollectionStructEnumerator(T[] values, uint count) : this()
         {
             _index  = 0;
             _values = values;
@@ -121,25 +111,16 @@ namespace Svelto.DataStructures
             _index = 0;
         }
         
-        public T Current
-        {
-            get { return _current; }
-        }
+        public T Current => _current;
 
-        T IEnumerator<T>.Current
-        {
-            get { return _current; }
-        }
+        T IEnumerator<T>.Current => _current;
 
-        object IEnumerator.Current
-        {
-            get { return _current; }
-        }
+        object IEnumerator.Current => _current;
         public void   Dispose() { }
 
         readonly T[] _values;
         T            _current;
         int          _index;
-        int          _count;
+        readonly uint          _count;
     }
 }

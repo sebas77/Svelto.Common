@@ -56,10 +56,7 @@ namespace Svelto.WeakEvents
         readonly DataStructures.WeakReference<object> objectRef;
         readonly MethodInfo method;
 
-        public bool IsValid
-        {
-            get { return objectRef.IsValid; }
-        }
+        public bool IsValid => objectRef.IsValid;
 
         protected WeakActionBase(Action listener)
             : this(listener.Target, listener.GetMethodInfoEx())
@@ -86,6 +83,7 @@ namespace Svelto.WeakEvents
 
         protected bool Invoke_Internal(object[] data)
         {
+            //please do not add the try catch here, it's very annoying to not be able to check the real stack
             if (objectRef.IsValid)
             {
                 method.Invoke(objectRef.Target, data);

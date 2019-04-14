@@ -18,7 +18,7 @@ namespace Svelto
     public static class Console
     {
         static readonly StringBuilder _stringBuilder = new StringBuilder(256);
-        static readonly FasterList<Svelto.DataStructures.WeakReference<ILogger>> _loggers;
+        static readonly FasterList<DataStructures.WeakReference<ILogger>> _loggers;
 
         static readonly ILogger _standardLogger;
         
@@ -149,6 +149,14 @@ namespace Svelto
         public static void LogWarningDebug(string txt)
         {
             LogWarning(txt);
+        }
+
+#if DISABLE_DEBUG
+		[Conditional("__NEVER_DEFINED__")]
+#endif
+        public static void LogWarningDebug(string txt, object reference)
+        {
+            LogWarning(txt.FastConcat(" ", reference.ToString()));
         }
 
         /// <summary>
