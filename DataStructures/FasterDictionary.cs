@@ -96,7 +96,7 @@ namespace Svelto.DataStructures.Experimental
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ContainsKey(TKey key)
         {
-            if (FindIndex(key, _buckets, _valuesInfo, out _))
+            if (TryFindIndex(key, _buckets, _valuesInfo, out _))
             {
                 return true;
             }
@@ -118,11 +118,9 @@ namespace Svelto.DataStructures.Experimental
 
         public bool Remove(KeyValuePair<TKey, TValue> item) { throw new NotImplementedException(); }
 
-        protected uint GetValueIndex(TKey index) { return GetIndex(index, _buckets, _valuesInfo); }
-
         public bool TryGetValue(TKey key, out TValue result)
         {
-            if (FindIndex(key, _buckets, _valuesInfo, out var findIndex))
+            if (TryFindIndex(key, _buckets, _valuesInfo, out var findIndex))
             {
                 result = _values[findIndex];
                 return true;
@@ -132,9 +130,9 @@ namespace Svelto.DataStructures.Experimental
             return false;
         }
         
-        public ref TValue GetDirectValue(TKey key)
+        public ref TValue GetValueByRef(TKey key)
         {
-            if (FindIndex(key, _buckets, _valuesInfo, out var findIndex))
+            if (TryFindIndex(key, _buckets, _valuesInfo, out var findIndex))
             {
                 return ref _values[findIndex];
             }
@@ -163,18 +161,6 @@ namespace Svelto.DataStructures.Experimental
             set => AddValue(key, ref value);
         }
         
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static int Hash(TKey key) { return key.GetHashCode(); }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static uint Reduce(uint x, uint N)
-        {
-            if (x >= N)
-                return x % N;
-
-            return x;
-        }
-
         bool AddValue(TKey key, ref TValue value)
         {
             if (_freeValueCellIndex == _values.Length)
@@ -385,7 +371,7 @@ namespace Svelto.DataStructures.Experimental
         //I store all the index with an offset + 1, so that in the bucket list 0 means actually not existing.
         //When read the offset must be offset by -1 again to be the real one. In this way
         //I avoid to initialize the array to -1
-        public bool FindIndex(TKey key, out uint findIndex)
+        public bool TryFindIndex(TKey key, out uint findIndex)
         {
             int  hash        = Hash(key);
             uint bucketIndex = Reduce((uint) hash, (uint) _buckets.Length);
@@ -410,14 +396,33 @@ namespace Svelto.DataStructures.Experimental
             return false;
         }
 
+        public ref TValue GetDirectValue(uint index)
+        {
+            return ref _values[index];
+        }
+        
+        protected uint GetValueIndex(TKey index) { return GetIndex(index, _buckets, _valuesInfo); }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static int Hash(TKey key) { return key.GetHashCode(); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static uint Reduce(uint x, uint N)
+        {
+            if (x >= N)
+                return x % N;
+
+            return x;
+        }
+
         static uint GetIndex(TKey key, int[] buckets, Node[] valuesInfo)
         {
-            if (FindIndex(key, buckets, valuesInfo, out var findIndex)) return findIndex;
+            if (TryFindIndex(key, buckets, valuesInfo, out var findIndex)) return findIndex;
 
             throw new FasterDictionaryException("Key not found");
         }
 
-        static bool FindIndex(TKey key, int[] buckets, Node[] valuesInfo, out uint findIndex)
+        static bool TryFindIndex(TKey key, int[] buckets, Node[] valuesInfo, out uint findIndex)
         {
             int hash        = Hash(key);
             var bucketIndex = Reduce((uint) hash, (uint) buckets.Length);
