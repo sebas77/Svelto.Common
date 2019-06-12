@@ -24,24 +24,26 @@ namespace Svelto
         
         static Console()
         {
-            _loggers = new FasterList<Svelto.DataStructures.WeakReference<ILogger>>();
+            _loggers = new FasterList<DataStructures.WeakReference<ILogger>>();
 
 #if UNITY_5_3_OR_NEWER || UNITY_5
             _standardLogger = new SlowUnityLogger();
 #else
             _standardLogger = new SimpleLogger();
 #endif
-            _loggers.Add(new Svelto.DataStructures.WeakReference<ILogger>(_standardLogger));
+            _loggers.Add(new DataStructures.WeakReference<ILogger>(_standardLogger));
         }
 
         public static void SetLogger(ILogger log)
         {
-            _loggers[0] = new Svelto.DataStructures.WeakReference<ILogger>(log);
+            _loggers[0] = new DataStructures.WeakReference<ILogger>(log);
         }
         
         public static void AddLogger(ILogger log)
         {
-            _loggers.Add(new Svelto.DataStructures.WeakReference<ILogger>(log));
+            log.OnLoggerAdded();
+            
+            _loggers.Add(new DataStructures.WeakReference<ILogger>(log));
         } 
  
         static void Log(string txt, LogType type, Exception e = null, Dictionary<string, string> extraData = null)
@@ -101,12 +103,12 @@ namespace Svelto
                         _stringBuilder.Length = 0;
 
                         extraData["OuterException".FastConcat(count)] = _stringBuilder.Append(e.GetType())
-                                                                    .Append("-<color=cyan>")
+                                                                    .Append("-<color=orange>")
                                                                     .Append(e.Message).Append("</color>").ToString();
 
                         _stringBuilder.Length = 0;
 
-                        extraData["OuterStackTrace".FastConcat(count)] = _stringBuilder.Append("-<color=cyan>").Append(e.StackTrace)
+                        extraData["OuterStackTrace".FastConcat(count)] = _stringBuilder.Append("-<color=orange>").Append(e.StackTrace)
                                                                      .Append("</color>").ToString();
 
                         e = e.InnerException;
@@ -119,7 +121,7 @@ namespace Svelto
                     _stringBuilder.Length = 0;
                     
                     toPrint = _stringBuilder.Append("-******-> ").Append("-Exception-").Append(e.GetType())
-                                  .Append("-<color=cyan>").Append(e.Message)
+                                  .Append("-<color=orange>").Append(e.Message)
                                   .Append("</color> ").AppendLine().Append(message).ToString();
                 }
             }
@@ -148,15 +150,15 @@ namespace Svelto
 #endif
         public static void LogWarningDebug(string txt)
         {
-            LogWarning(txt);
+            Log("<color=orange> ".FastConcat(txt, "</color>"));
         }
 
 #if DISABLE_DEBUG
-		[Conditional("__NEVER_DEFINED__")]
+        [Conditional("__NEVER_DEFINED__")]
 #endif
-        public static void LogWarningDebug(string txt, object reference)
+        public static void LogWarningDebug<T>(string txt, T extradebug)
         {
-            LogWarning(txt.FastConcat(" ", reference.ToString()));
+            Log("<color=orange> ".FastConcat(txt, " - ", extradebug.ToString(), "</color>"));
         }
 
         /// <summary>

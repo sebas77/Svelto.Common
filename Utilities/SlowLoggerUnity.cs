@@ -12,7 +12,6 @@ namespace Svelto.Utilities
     {
         static SlowUnityLogger()
         {
-            Application.SetStackTraceLogType(UnityEngine.LogType.Error, StackTraceLogType.None);
             projectFolder = Application.dataPath.Replace("Assets", "");
         }
         
@@ -38,9 +37,14 @@ namespace Svelto.Utilities
                     break;
                 case LogType.Exception:
                 case LogType.Error:
-                    Debug.LogError("<color=cyan> ".FastConcat(txt, "</color> ", Environment.NewLine, stack).FastConcat(Environment.NewLine, dataString));
+                    Debug.LogError("<color=orange> ".FastConcat(txt, "</color> ", Environment.NewLine, stack).FastConcat(Environment.NewLine, dataString));
                     break;
             }
+        }
+
+        public void OnLoggerAdded()
+        {
+            Application.SetStackTraceLogType(UnityEngine.LogType.Error, StackTraceLogType.None);
         }
 
         /// <summary>
