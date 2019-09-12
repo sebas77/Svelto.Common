@@ -151,9 +151,7 @@ namespace Svelto.ObjectPool
 
         Stack<T> ReturnValidPool(int pool)
         {
-            Stack<T> localPool;
-
-            if (_pools.TryGetValue(pool, out localPool) == false)
+            if (_pools.TryGetValue(pool, out var localPool) == false)
                 _pools[pool] = localPool = new Stack<T>();
 
             return localPool;
@@ -161,9 +159,7 @@ namespace Svelto.ObjectPool
 
         Stack<T> ReturnValidPool(string poolName)
         {
-            Stack<T> localPool;
-
-            if (_namedPools.TryGetValue(poolName, out localPool) == false)
+            if (_namedPools.TryGetValue(poolName, out var localPool) == false)
                 localPool = _namedPools[poolName] = new Stack<T>();
 
             return localPool;
@@ -198,8 +194,8 @@ namespace Svelto.ObjectPool
             return aObj == null || aObj.Equals(null);
         }
 
-        Dictionary<int, Stack<T>>    _pools      = new Dictionary<int, Stack<T>>();
-        Dictionary<string, Stack<T>> _namedPools = new Dictionary<string, Stack<T>>();
+        readonly Dictionary<int, Stack<T>>    _pools      = new Dictionary<int, Stack<T>>();
+        readonly Dictionary<string, Stack<T>> _namedPools = new Dictionary<string, Stack<T>>();
 
         int _objectsReused;
         int _objectsCreated;

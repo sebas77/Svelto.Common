@@ -15,9 +15,9 @@ namespace Svelto.DataStructures.Experimental
     /// </summary>
     /// <typeparam name="TKey"></typeparam>
     /// <typeparam name="TValue"></typeparam>
-    public class FasterDictionary<TKey, TValue> : IDictionary<TKey, TValue> where TKey : IEquatable<TKey>
+    public class FasterDictionary<TKey, TValue> : IDictionary<TKey, TValue> where TKey:IEquatable<TKey>
     {
-        public FasterDictionary(uint size)
+        protected FasterDictionary(uint size)
         {
             _valuesInfo = new Node[size];
             _values     = new TValue[size];
@@ -37,7 +37,7 @@ namespace Svelto.DataStructures.Experimental
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TValue[] GetValuesArray(out uint count)
         {
-            count = (uint) _freeValueCellIndex;
+            count = _freeValueCellIndex;
 
             return _values;
         }

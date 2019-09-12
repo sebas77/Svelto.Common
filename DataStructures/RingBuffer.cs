@@ -16,16 +16,25 @@ namespace Svelto.DataStructures
         Volatile.PaddedLong _consumerCursor = new Volatile.PaddedLong();
         Volatile.PaddedLong _producerCursor = new Volatile.PaddedLong();
 
+#if DEBUG && !PROFILER        
+        readonly string _name;
+#endif
+        
+        const int _NUMBER_OF_ITERATIONS_BEFORE_STALL_DETECTED = 1024;
+
         /// <summary>
         /// Creates a new RingBuffer with the given capacity
         /// </summary>
         /// <param name="capacity">The capacity of the buffer</param>
         /// <remarks>Only a single thread may attempt to consume at any one time</remarks>
-        public RingBuffer(int capacity)
+        public RingBuffer(int capacity, string name)
         {
             capacity = NextPowerOfTwo(capacity);
             _modMask = capacity - 1;
             _entries = new T[capacity];
+#if DEBUG && !PROFILER            
+            _name = name;
+#endif            
         }
 
         /// <summary>
@@ -40,20 +49,21 @@ namespace Svelto.DataStructures
         /// </summary>
         /// <param name="name"></param>
         /// <returns>The next available item</returns>
-        public ref T Dequeue(string name)
+        public ref T Dequeue()
         {
             var next = _consumerCursor.ReadAcquireFence() + 1;
             
             int quickIterations = 0;
 
             // makes sure we read the data from _entries after we have read the producer cursor
-            while (_producerCursor.ReadAcquireFence() < next && quickIterations < 1024)
+            while (_producerCursor.ReadAcquireFence() < next && quickIterations < _NUMBER_OF_ITERATIONS_BEFORE_STALL_DETECTED)
             {
                 ThreadUtility.Wait(ref quickIterations, 16);
             }
-            
-            if (quickIterations >= 1024) throw new RingBufferExceptionDequeue<T>(name, next);
-
+#if DEBUG && !PROFILER                            
+            if (quickIterations >= _NUMBER_OF_ITERATIONS_BEFORE_STALL_DETECTED) 
+                throw new RingBufferExceptionDequeue<T>(_name, next);
+#endif            
             _consumerCursor.WriteReleaseFence(next); // makes sure we read the data from _entries before we update the consumer cursor
             return ref this[next];
         }
@@ -64,7 +74,7 @@ namespace Svelto.DataStructures
         /// <param name="obj">the items</param>
         /// <param name="name"></param>
         /// <returns>True if successful</returns>
-        public bool TryDequeue(out T obj, string name)
+        public bool TryDequeue(out T obj)
         {
             var next = _consumerCursor.ReadAcquireFence() + 1;
 
@@ -74,7 +84,7 @@ namespace Svelto.DataStructures
                 return false;
             }
             
-            obj = Dequeue(name);
+            obj = Dequeue();
             return true;
         }
         
@@ -86,7 +96,7 @@ namespace Svelto.DataStructures
 
         public void Reset() { _consumerCursor.WriteReleaseFence(_producerCursor.ReadAcquireFence());}
 
-        public void Enqueue(ref T item, string name)
+        public void Enqueue(ref T item)
         {
             var next = _producerCursor.ReadAcquireFence() + 1;
 
@@ -95,14 +105,17 @@ namespace Svelto.DataStructures
             
             int quickIterations = 0;
 
-            while (wrapPoint > min && quickIterations < 1024)
+            while (wrapPoint > min && quickIterations < _NUMBER_OF_ITERATIONS_BEFORE_STALL_DETECTED)
             {
                 min = _consumerCursor.ReadAcquireFence();
                 
                 ThreadUtility.Wait(ref quickIterations, 16);
             }
-            
-            if (quickIterations >= 1024) throw new RingBufferExceptionEnqueue<T>(name, next);
+
+#if DEBUG && !PROFILER                
+            if (quickIterations >= _NUMBER_OF_ITERATIONS_BEFORE_STALL_DETECTED) 
+                throw new RingBufferExceptionEnqueue<T>(_name, next);
+#endif            
 
             this[next] = item;
             _producerCursor.WriteReleaseFence(next); // makes sure we write the data in _entries before we update the producer cursor

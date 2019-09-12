@@ -17,11 +17,11 @@ namespace Svelto
 {
     public static class Console
     {
-        static readonly StringBuilder _stringBuilder = new StringBuilder(256);
+        static readonly StringBuilder                                     _stringBuilder = new StringBuilder(256);
         static readonly FasterList<DataStructures.WeakReference<ILogger>> _loggers;
 
         static readonly ILogger _standardLogger;
-        
+
         static Console()
         {
             _loggers = new FasterList<DataStructures.WeakReference<ILogger>>();
@@ -31,6 +31,8 @@ namespace Svelto
 #else
             _standardLogger = new SimpleLogger();
 #endif
+            _standardLogger.OnLoggerAdded();
+
             _loggers.Add(new DataStructures.WeakReference<ILogger>(_standardLogger));
         }
 
@@ -38,14 +40,14 @@ namespace Svelto
         {
             _loggers[0] = new DataStructures.WeakReference<ILogger>(log);
         }
-        
+
         public static void AddLogger(ILogger log)
         {
             log.OnLoggerAdded();
-            
+
             _loggers.Add(new DataStructures.WeakReference<ILogger>(log));
-        } 
- 
+        }
+
         static void Log(string txt, LogType type, Exception e = null, Dictionary<string, string> extraData = null)
         {
             for (int i = 0; i < _loggers.Count; i++)
@@ -59,7 +61,7 @@ namespace Svelto
                 }
             }
         }
-        
+
         public static void Log(string txt)
         {
             Log(txt, LogType.Log);
@@ -68,7 +70,7 @@ namespace Svelto
         public static void LogError(string txt, Dictionary<string, string> extraData = null)
         {
             string toPrint;
-            
+
             lock (_stringBuilder)
             {
                 _stringBuilder.Length = 0;
@@ -76,57 +78,43 @@ namespace Svelto
                 _stringBuilder.Append(txt);
 
                 toPrint = _stringBuilder.ToString();
-            }    
-             
+            }
+
             Log(toPrint, LogType.Error, null, extraData);
-            
         }
 
         public static void LogException(Exception e, Dictionary<string, string> extraData = null)
         {
             LogException(String.Empty, e, extraData);
         }
-        
+
         public static void LogException(string message, Exception e, Dictionary<string, string> extraData = null)
         {
             if (extraData == null)
                 extraData = new Dictionary<string, string>();
-            
-            string toPrint;
 
             lock (_stringBuilder)
             {
-                {
-                    int count = 0;
-                    while (e.InnerException != null)
-                    {
-                        _stringBuilder.Length = 0;
-
-                        extraData["OuterException".FastConcat(count)] = _stringBuilder.Append(e.GetType())
-                                                                    .Append("-<color=orange>")
-                                                                    .Append(e.Message).Append("</color>").ToString();
-
-                        _stringBuilder.Length = 0;
-
-                        extraData["OuterStackTrace".FastConcat(count)] = _stringBuilder.Append("-<color=orange>").Append(e.StackTrace)
-                                                                     .Append("</color>").ToString();
-
-                        e = e.InnerException;
-
-                        count++;
-                    }
-                }
-
+                int count = 0;
+                while (e.InnerException != null)
                 {
                     _stringBuilder.Length = 0;
-                    
-                    toPrint = _stringBuilder.Append("-******-> ").Append("-Exception-").Append(e.GetType())
-                                  .Append("-<color=orange>").Append(e.Message)
-                                  .Append("</color> ").AppendLine().Append(message).ToString();
+
+                    extraData["OuterException".FastConcat(count)] = _stringBuilder.Append(e.GetType())
+                        .Append("-<color=orange>")
+                        .Append(e.Message).Append("</color>").ToString();
+
+                    _stringBuilder.Length = 0;
+
+                    extraData["OuterStackTrace".FastConcat(count)] = _stringBuilder.Append(e.StackTrace).ToString();
+
+                    e = e.InnerException;
+
+                    count++;
                 }
             }
-            
-            Log(toPrint, LogType.Exception, e, extraData);
+
+            Log(message, LogType.Exception, e, extraData);
         }
 
         public static void LogWarning(string txt)
@@ -142,9 +130,9 @@ namespace Svelto
                 toPrint = _stringBuilder.ToString();
             }
 
-            Log(toPrint,  LogType.Warning);
+            Log(toPrint, LogType.Warning);
         }
-        
+
 #if DISABLE_DEBUG
 		[Conditional("__NEVER_DEFINED__")]
 #endif
@@ -177,7 +165,8 @@ namespace Svelto
                                                 GetForCurrentProcess().ProcessStartTime.DateTime.ToUniversalTime()).ToString();
 #else
                 string currentTimeString = DateTime.UtcNow.ToLongTimeString(); //ensure includes seconds
-                string processTimeString = (DateTime.UtcNow - Process.GetCurrentProcess().StartTime.ToUniversalTime()).ToString();
+                string processTimeString =
+                    (DateTime.UtcNow - Process.GetCurrentProcess().StartTime.ToUniversalTime()).ToString();
 #endif
 
                 _stringBuilder.Length = 0;

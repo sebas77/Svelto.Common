@@ -10,7 +10,7 @@ namespace Svelto.Utilities
 {
     public static class FastInvoke<T> 
     {
-#if ENABLE_IL2CPP
+#if ENABLE_IL2CPP //Expression.Lambda may work now, it's something to test!
         public static ActionCast<T> MakeSetter(FieldInfo field)
         {
             if (field.FieldType.IsInterfaceEx() == true && field.FieldType.IsValueTypeEx() == false)

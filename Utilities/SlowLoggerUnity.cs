@@ -1,3 +1,5 @@
+
+using System.Threading;
 #if UNITY_5_3_OR_NEWER || UNITY_5
 using System;
 using System.Collections.Generic;
@@ -10,20 +12,17 @@ namespace Svelto.Utilities
 {
     public class SlowUnityLogger : ILogger
     {
-        static SlowUnityLogger()
+        public SlowUnityLogger()
         {
-            projectFolder = Application.dataPath.Replace("Assets", "");
+            StringBuilder ValueFactory() => new StringBuilder();
+
+            _stringBuilder = new ThreadLocal<StringBuilder>(ValueFactory);
         }
         
         public void Log(string txt, LogType type = LogType.Log, Exception e = null,
                         Dictionary<string, string> data = null)
         {
             var dataString = string.Empty;
-
-            string stack = null;
-            if (e != null)
-                stack = ExtractFormattedStackTrace(new StackTrace(e, true));
-
             if (data != null)
                 dataString = DataToString.DetailString(data);
 
@@ -35,16 +34,34 @@ namespace Svelto.Utilities
                 case LogType.Warning:
                     Debug.LogWarning(txt);
                     break;
+                case LogType.Error:                
                 case LogType.Exception:
-                case LogType.Error:
-                    Debug.LogError("<color=orange> ".FastConcat(txt, "</color> ", Environment.NewLine, stack).FastConcat(Environment.NewLine, dataString));
+                    string stack;
+                    if (e != null)
+                    {
+                        txt = txt.FastConcat(e.Message);
+                        stack = ExtractFormattedStackTrace(new StackTrace(e, true));
+                    }
+                    else
+                        stack = ExtractFormattedStackTraceWithoutException(new StackTrace(3, true));
+                    
+                    Debug.LogError("<color=orange> ".FastConcat(txt, "</color> ", Environment.NewLine, stack)
+                        .FastConcat(Environment.NewLine, dataString));
                     break;
             }
         }
 
         public void OnLoggerAdded()
         {
+            projectFolder = Application.dataPath.Replace("Assets", "");    
+            
             Application.SetStackTraceLogType(UnityEngine.LogType.Error, StackTraceLogType.None);
+            Application.SetStackTraceLogType(UnityEngine.LogType.Exception, StackTraceLogType.None);
+#if !UNITY_EDITOR || PROFILER            
+            Application.SetStackTraceLogType(UnityEngine.LogType.Warning, StackTraceLogType.None);
+            Application.SetStackTraceLogType(UnityEngine.LogType.Log, StackTraceLogType.None);
+#endif            
+            Console.Log("Slow Unity Logger added");
         }
 
         /// <summary>
@@ -52,19 +69,31 @@ namespace Svelto.Utilities
         /// </summary>
         /// <param name="stackTrace"></param>
         /// <returns></returns>
-        internal string ExtractFormattedStackTrace(StackTrace stackTrace)
+        string ExtractFormattedStackTrace(StackTrace stackTrace)
         {
-            _stringBuilder.Length = 0;
+            _stringBuilder.Value.Length = 0;
             
             var frame = new StackTrace(true);
             
             for (var index1 = 0; index1 < stackTrace.FrameCount; ++index1)
             {
-                FormatStack(stackTrace, index1, _stringBuilder);
+                FormatStack(stackTrace, index1, _stringBuilder.Value);
             }
             for (var index1 = 4; index1 < frame.FrameCount; ++index1)
             {
-                FormatStack(frame, index1, _stringBuilder);
+                FormatStack(frame, index1, _stringBuilder.Value);
+            }
+
+            return _stringBuilder.ToString();
+        }
+        
+        string ExtractFormattedStackTraceWithoutException(StackTrace stackTrace)
+        {
+            _stringBuilder.Value.Length = 0;
+            
+            for (var index1 = 0; index1 < stackTrace.FrameCount; ++index1)
+            {
+                FormatStack(stackTrace, index1, _stringBuilder.Value);
             }
 
             return _stringBuilder.ToString();
@@ -133,9 +162,10 @@ namespace Svelto.Utilities
                 }
             }
         }
-        readonly StringBuilder _stringBuilder = new StringBuilder(Byte.MaxValue);
+
+        readonly ThreadLocal<StringBuilder> _stringBuilder;
         
-        static readonly string projectFolder;
+        static string projectFolder;
     }
    
 }

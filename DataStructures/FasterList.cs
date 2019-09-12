@@ -10,12 +10,12 @@ namespace Svelto.DataStructures
     {
         public T Current => _current;
 
-        public FasterListEnumerator(T[] buffer, int size)
+        public FasterListEnumerator(T[] buffer, uint size)
         {
             _size = size;
             _counter = 0;
             _buffer = buffer;
-            _current = default(T);
+            _current = default;
         }
 
         object IEnumerator.Current => _current;
@@ -58,7 +58,7 @@ namespace Svelto.DataStructures
 
         T[] _buffer;
         int _counter;
-        readonly int _size;
+        readonly uint _size;
         T _current;
     }
 
@@ -114,6 +114,7 @@ namespace Svelto.DataStructures
         }
 
         public T this[int index] { get => _list[index]; set => throw new NotImplementedException(); }
+        public T this[uint index] { get => _list[index]; set => throw new NotImplementedException(); }
 
         public FasterListEnumerator<T> GetEnumerator()
         {
@@ -170,6 +171,11 @@ namespace Svelto.DataStructures
             return GetEnumerator();
         }
 
+        public T[] ToArrayFast()
+        {
+            return _list.ToArrayFast();
+        }
+
         readonly FasterList<T> _list;
     }
 
@@ -181,7 +187,7 @@ namespace Svelto.DataStructures
             _list = list;
             _lockQ = new ReaderWriterLockSlim();
         }
-        
+
         public FasterListThreadSafe()
         {
             _list  = new FasterList<T>();
@@ -244,6 +250,19 @@ namespace Svelto.DataStructures
             try
             {
                 _list.Add(item);
+            }
+            finally
+            {
+                _lockQ.ExitWriteLock();
+            }
+        }
+
+        public void Add(uint location, T item)
+        {
+            _lockQ.EnterWriteLock();
+            try
+            {
+                _list.Add(location, item);
             }
             finally
             {
@@ -367,7 +386,7 @@ namespace Svelto.DataStructures
                 _lockQ.ExitWriteLock();
             }
         }
-        
+
         public void UnorderedRemove(T value)
         {
             _lockQ.EnterWriteLock();
@@ -380,7 +399,7 @@ namespace Svelto.DataStructures
                 _lockQ.ExitWriteLock();
             }
         }
-        
+
         public T[] ToArrayFast(out int count)
         {
             _lockQ.EnterReadLock();
@@ -522,6 +541,15 @@ namespace Svelto.DataStructures
             _count = (uint) collection.Length;
         }
 
+        public FasterList(T[] collection, uint actualSize)
+        {
+            _buffer = new T[actualSize];
+
+            Array.Copy(collection, _buffer, actualSize);
+
+            _count = actualSize;
+        }
+
         public FasterList(ICollection<T> collection)
         {
             _buffer = new T[collection.Count];
@@ -556,13 +584,13 @@ namespace Svelto.DataStructures
                 DBC.Common.Check.Require(index < _count && _count > 0, "out of bound index");
                 return _buffer[index];
             }
-            set 
+            set
             {
                 DBC.Common.Check.Require(index < _count && _count > 0, "out of bound index");
-                _buffer[index] = value; 
+                _buffer[index] = value;
             }
         }
-        
+
         public ref T this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -583,7 +611,12 @@ namespace Svelto.DataStructures
             }
         }
 
-        public void Add(T item)
+        void ICollection<T>.Add(T item)
+        {
+            Add(item);
+        }
+
+        public void Add(in T item)
         {
             if (_count == _buffer.Length)
                 AllocateMore();
@@ -591,15 +624,7 @@ namespace Svelto.DataStructures
             _buffer[_count++] = item;
         }
 
-        public void AddRef(ref T item)
-        {
-            if (_count == _buffer.Length)
-                AllocateMore();
-
-            _buffer[_count++] = item;
-        }
-        
-        public void Add(uint location, T item)
+        public void Add(uint location, in T item)
         {
             Expand(location + 1);
 
@@ -625,7 +650,7 @@ namespace Svelto.DataStructures
 
             return list;
         }
-        
+
         public static FasterList<T> Fill<U>(uint initialSize) where U: T, new()
         {
             var list = PreFill<U>(initialSize);
@@ -688,13 +713,13 @@ namespace Svelto.DataStructures
         {
 #if DEBUG && !PROFILER
             if (typeof(T).IsClass)
-                Svelto.Console.LogWarning(
+                Console.LogWarning(
                     "Warning: objects held by this list won't be garbage collected. Use ResetToReuse or Clear " +
                     "to avoid this warning");
-#endif            
+#endif
             _count = 0;
         }
-        
+
         public void ResetToReuse()
         {
             _count = 0;
@@ -709,7 +734,7 @@ namespace Svelto.DataStructures
 
             result = (U)_buffer[_count];
 
-            if (result != null)
+            if ((result is null) == false)
             {
                 _count++;
 
@@ -719,11 +744,11 @@ namespace Svelto.DataStructures
             return false;
         }
         
-        public bool ReuseOneSlot()
+        public bool ReuseOneSlot<U>() where U: struct, T
         {
             if (_count >= _buffer.Length)
                 return false;
-            
+
             _count++;
 
             return true;
@@ -742,7 +767,7 @@ namespace Svelto.DataStructures
 
             return index != -1;
         }
-        
+
         public void CopyTo(T[] array, int arrayIndex)
         {
             Array.Copy(_buffer, 0, array, arrayIndex, Count);
@@ -750,7 +775,7 @@ namespace Svelto.DataStructures
 
         public FasterListEnumerator<T> GetEnumerator()
         {
-            return new FasterListEnumerator<T>(_buffer, Count);
+            return new FasterListEnumerator<T>(_buffer, (uint) Count);
         }
 
         public int IndexOf(T item)
@@ -803,14 +828,14 @@ namespace Svelto.DataStructures
 
             Array.Copy(_buffer, index + 1, _buffer, index, _count - index);
 
-            _buffer[_count] = default(T);
+            _buffer[_count] = default;
         }
 
         public void Resize(uint newSize)
         {
             if (newSize == _buffer.Length) return;
 
-            if (newSize < MIN_SIZE)
+            if (newSize < MIN_SIZE) // This is always false
                 newSize = MIN_SIZE;
 
             Array.Resize(ref _buffer, (int) newSize);
@@ -828,7 +853,7 @@ namespace Svelto.DataStructures
 
         public T[] ToArray()
         {
-            T[] destinationArray = new T[_count];
+            var destinationArray = new T[_count];
 
             Array.Copy(_buffer, 0, destinationArray, 0, _count);
 
@@ -863,12 +888,12 @@ namespace Svelto.DataStructures
 
             if (index == --_count)
             {
-                _buffer[_count] = default(T);
+                _buffer[_count] = default;
                 return false;
             }
 
             _buffer[index] = _buffer[_count];
-            _buffer[_count] = default(T);
+            _buffer[_count] = default;
 
             return true;
         }
@@ -924,13 +949,13 @@ namespace Svelto.DataStructures
         public void ExpandBy(uint increment)
         {
             uint count = _count + increment;
-            
+
             if (_buffer.Length < count)
                 AllocateMore(count);
 
             _count = count;
         }
-        
+
         public void Expand(uint newSize)
         {
             if (_buffer.Length < newSize)
@@ -939,7 +964,14 @@ namespace Svelto.DataStructures
             if (_count < newSize)
                 _count = newSize;
         }
+        
+        public uint Push(in T item)
+        {
+            Add(_count, item);
 
+            return _count - 1;
+        }
+        
         T[] _buffer;
         uint _count;
 
