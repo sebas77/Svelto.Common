@@ -1,6 +1,6 @@
 using System;
 
-namespace Svelto.DataStructures.Experimental
+namespace Svelto.DataStructures
 {
     public struct RefWrapper<T>: IEquatable<RefWrapper<T>> where T:class
     {

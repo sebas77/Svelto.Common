@@ -6,11 +6,10 @@ namespace Svelto.DataStructures
 {
     public class FasterDenseList<T>:IEnumerable<T>
     {
-        public uint Count => (uint) keys.Count;
+        public uint Count => (uint) values.Count;
 
         public FasterDenseList()
         {
-            keys = new FasterList<uint>();
             values = new FasterList<T>();
         }
         
@@ -26,30 +25,21 @@ namespace Svelto.DataStructures
 
         public void FastClear()
         {
-            keys.ResetToReuse();
             values.ResetToReuse();
         }
         
         internal bool ReuseOneSlot<U>(uint index, out U item) where U:class, T
         {
             if (values.ReuseOneSlot(out item) == true)
-            {
-                keys.ReuseOneSlot<uint>();
-
-                keys[keys.Count - 1] = index;
-
                 return true;
-            }
 
             item = default;
             return false;
         }
         
-        internal void Push((uint index, T item) value)
+        internal uint Push((uint index, T item) value)
         {
-            keys.Push(value.index);
-            
-            values.Push(value.item);
+            return values.Push(value.item);
         }
         
         internal ref T this[uint index] => ref values[index];
@@ -64,26 +54,10 @@ namespace Svelto.DataStructures
             throw new NotImplementedException();
         }
         
-        readonly FasterList<uint> keys;
         readonly FasterList<T>    values;
-
-        public struct DenseIterator<T>
-        {
-            public DenseIterator(uint currentIndex, FasterDenseList<T> fasterSparseList)
-            {
-                _currentIndex = currentIndex;
-                _fasterSparseList = fasterSparseList;
-            }
-
-            public ref T    Value => ref _fasterSparseList.values[_currentIndex];
-            public     uint Key   => _fasterSparseList.keys[_currentIndex];
-        
-            readonly uint               _currentIndex;
-            readonly FasterDenseList<T> _fasterSparseList;
-        }
     }
 
-    public struct FasterDenseListEnumerator<T>:IEnumerator<FasterDenseList<T>.DenseIterator<T>>
+    public struct FasterDenseListEnumerator<T>:IEnumerator<T>
     {
         internal FasterDenseListEnumerator(FasterDenseList<T> denseList):this()
         {
@@ -104,10 +78,10 @@ namespace Svelto.DataStructures
             _currentIndex = -1;
         }
 
-        public FasterDenseList<T>.DenseIterator<T> Current =>
-            new FasterDenseList<T>.DenseIterator<T>((uint) _currentIndex, _fasterDenseList);
+        public ref T Current => ref _fasterDenseList[(uint) _currentIndex];
 
         object IEnumerator.Current => throw new NotImplementedException();
+        T IEnumerator<T>.Current => throw new NotImplementedException();
 
         public void Dispose()
         {}

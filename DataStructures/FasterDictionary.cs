@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace Svelto.DataStructures.Experimental
+namespace Svelto.DataStructures
 {
     /// <summary>
     /// This dictionary has been created for just one reason: I needed a dictionary that would have let me iterate
@@ -17,13 +17,13 @@ namespace Svelto.DataStructures.Experimental
     /// <typeparam name="TValue"></typeparam>
     public class FasterDictionary<TKey, TValue> : IDictionary<TKey, TValue> where TKey:IEquatable<TKey>
     {
-        protected FasterDictionary(uint size)
+        public FasterDictionary(uint size)
         {
             _valuesInfo = new Node[size];
             _values     = new TValue[size];
             _buckets    = new int[HashHelpers.GetPrime((int) size)];
         }
-
+        
         public FasterDictionary() : this(1) { }
 
         ICollection<TKey> IDictionary<TKey, TValue>.Keys => throw new NotImplementedException();
@@ -32,7 +32,8 @@ namespace Svelto.DataStructures.Experimental
 
         ICollection<TValue> IDictionary<TKey, TValue>.Values => throw new NotImplementedException();
 
-        public ReadOnlyCollectionStruct<TValue> Values => new ReadOnlyCollectionStruct<TValue>(_values, _freeValueCellIndex);
+        public ReadOnlyCollectionStruct<TValue> Values =>
+            new ReadOnlyCollectionStruct<TValue>(_values, _freeValueCellIndex);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public TValue[] GetValuesArray(out uint count)
@@ -41,8 +42,13 @@ namespace Svelto.DataStructures.Experimental
 
             return _values;
         }
-
-        public uint Collisions => _collisions;
+        
+        
+        public TValue[] valuesArray  
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _values;
+        }
 
         public int Count => (int) _freeValueCellIndex;
 
@@ -96,7 +102,7 @@ namespace Svelto.DataStructures.Experimental
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ContainsKey(TKey key)
         {
-            if (TryFindIndex(key, _buckets, _valuesInfo, out _))
+            if (TryFindIndex(key, out _))
             {
                 return true;
             }
@@ -120,7 +126,7 @@ namespace Svelto.DataStructures.Experimental
 
         public bool TryGetValue(TKey key, out TValue result)
         {
-            if (TryFindIndex(key, _buckets, _valuesInfo, out var findIndex))
+            if (TryFindIndex(key, out var findIndex))
             {
                 result = _values[findIndex];
                 return true;
@@ -132,7 +138,7 @@ namespace Svelto.DataStructures.Experimental
         
         public ref TValue GetValueByRef(TKey key)
         {
-            if (TryFindIndex(key, _buckets, _valuesInfo, out var findIndex))
+            if (TryFindIndex(key, out var findIndex))
             {
                 return ref _values[findIndex];
             }
@@ -152,11 +158,11 @@ namespace Svelto.DataStructures.Experimental
                 Array.Resize(ref _valuesInfo, expandPrime);
             }
         }
-
+        
         public TValue this[TKey key]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _values[GetIndex(key, _buckets, _valuesInfo)];
+            get => _values[GetIndex(key)];
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set => AddValue(key, ref value);
         }
@@ -395,13 +401,18 @@ namespace Svelto.DataStructures.Experimental
             findIndex = 0;
             return false;
         }
-
+        
         public ref TValue GetDirectValue(uint index)
         {
             return ref _values[index];
         }
-        
-        protected uint GetValueIndex(TKey index) { return GetIndex(index, _buckets, _valuesInfo); }
+
+        public uint GetIndex(TKey key)
+        {
+            if (TryFindIndex(key,  out var findIndex)) return findIndex;
+
+            throw new FasterDictionaryException("Key not found");
+        }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static int Hash(TKey key) { return key.GetHashCode(); }
@@ -413,36 +424,6 @@ namespace Svelto.DataStructures.Experimental
                 return x % N;
 
             return x;
-        }
-
-        static uint GetIndex(TKey key, int[] buckets, Node[] valuesInfo)
-        {
-            if (TryFindIndex(key, buckets, valuesInfo, out var findIndex)) return findIndex;
-
-            throw new FasterDictionaryException("Key not found");
-        }
-
-        static bool TryFindIndex(TKey key, int[] buckets, Node[] valuesInfo, out uint findIndex)
-        {
-            int hash        = Hash(key);
-            var bucketIndex = Reduce((uint) hash, (uint) buckets.Length);
-
-            int valueIndex = buckets[bucketIndex] - 1;
-
-            while (valueIndex != -1)
-            {
-                //for some reason this is way faster they use Comparer<TKey>.default, should investigate
-                if (valuesInfo[valueIndex].hashcode == hash && valuesInfo[valueIndex].key.Equals(key) == true)
-                {
-                    findIndex = (uint) valueIndex;
-                    return true;
-                }
-
-                valueIndex = valuesInfo[valueIndex].previous;
-            }
-
-            findIndex = 0;
-            return false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -555,26 +536,26 @@ namespace Svelto.DataStructures.Experimental
             public void Dispose() { throw new NotImplementedException(); }
         }
 
-        protected TValue[] _values;
+        TValue[] _values;
 
-        Node[]  _valuesInfo;
-        int[]   _buckets;
-        uint    _freeValueCellIndex;
-        uint     _collisions;
-    }
+        Node[] _valuesInfo;
+        int[]  _buckets;
+        uint   _freeValueCellIndex;
+        uint   _collisions;
+        
+        public struct KeyValuePairFast<TKey, TValue>
+        {
+            readonly TValue[] _dicValues;
+            readonly int      _index;
 
-    public struct KeyValuePairFast<TKey, TValue>
-    {
-        readonly TValue[] _dicValues;
-        readonly int _index;
+            public KeyValuePairFast(TKey key, TValue[] dicValues, int index) { Key = key;
+                _dicValues = dicValues;
+                _index = index;
+            }
 
-        public KeyValuePairFast(TKey key, TValue[] dicValues, int index) { Key = key;
-            _dicValues = dicValues;
-            _index = index;
+            public readonly TKey   Key;
+            public ref      TValue Value => ref _dicValues[_index];
         }
-
-        public readonly TKey Key;
-        public ref TValue Value => ref _dicValues[_index];
     }
 
     public class FasterDictionaryException : Exception
