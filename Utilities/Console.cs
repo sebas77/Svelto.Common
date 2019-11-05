@@ -1,7 +1,6 @@
 #if !DEBUG || PROFILER
 #define DISABLE_DEBUG
 #endif
-
 using System;
 using System.Collections.Generic;
 #if NETFX_CORE
@@ -136,7 +135,7 @@ namespace Svelto
 #if DISABLE_DEBUG
 		[Conditional("__NEVER_DEFINED__")]
 #endif
-        public static void LogWarningDebug(string txt)
+        public static void LogDebug(string txt)
         {
             Log("<color=orange> ".FastConcat(txt, "</color>"));
         }
@@ -144,7 +143,7 @@ namespace Svelto
 #if DISABLE_DEBUG
         [Conditional("__NEVER_DEFINED__")]
 #endif
-        public static void LogWarningDebug<T>(string txt, T extradebug)
+        public static void LogDebug<T>(string txt, T extradebug)
         {
             Log("<color=orange> ".FastConcat(txt, " - ", extradebug.ToString(), "</color>"));
         }

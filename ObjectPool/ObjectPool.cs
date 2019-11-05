@@ -3,11 +3,11 @@ using System.Collections.Generic;
 
 namespace Svelto.ObjectPool
 {
-    public class ObjectPool<T> : IObjectPool<T>
+    public class ObjectPool<T> : IObjectPool<T>, IDisposable
 #if DEBUG
                                , IObjectPoolDebug
 #endif
-        where T : class, new()
+        where T : class
     {
 #if DEBUG
         readonly HashSet<T> alreadyRecycled = new HashSet<T>();
@@ -21,7 +21,13 @@ namespace Svelto.ObjectPool
             alreadyRecycled.Clear();
 #endif
         }
-
+        
+        public virtual void Dispose()
+        {
+            _pools.Clear();
+            _namedPools.Clear();
+        }
+        
         public virtual void Recycle(T go, int pool)
         {
             InternalRecycle(go, pool);
@@ -194,8 +200,8 @@ namespace Svelto.ObjectPool
             return aObj == null || aObj.Equals(null);
         }
 
-        readonly Dictionary<int, Stack<T>>    _pools      = new Dictionary<int, Stack<T>>();
-        readonly Dictionary<string, Stack<T>> _namedPools = new Dictionary<string, Stack<T>>();
+        protected readonly Dictionary<int, Stack<T>>    _pools      = new Dictionary<int, Stack<T>>();
+        protected readonly Dictionary<string, Stack<T>> _namedPools = new Dictionary<string, Stack<T>>();
 
         int _objectsReused;
         int _objectsCreated;

@@ -51,13 +51,8 @@ namespace Svelto.Common
 
     public struct PlatformProfiler: IPlatformProfiler<DisposableSampler>
     {
-        ProfilerMarker _simulatePerfMarker;
-
         public PlatformProfiler(string info)
-        {
-            _simulatePerfMarker = new ProfilerMarker(info);
-            _simulatePerfMarker.Begin();
-        }
+        {}
         
         public DisposableSampler Sample(string samplerName, string samplerInfo = null)
         {
@@ -66,7 +61,6 @@ namespace Svelto.Common
 #else
             var name = samplerName;
 #endif            
-            
             return new DisposableSampler(new ProfilerMarker(name));
         }
 
@@ -76,9 +70,7 @@ namespace Svelto.Common
         }
 
         public void Dispose()
-        {
-            _simulatePerfMarker.End();
-        }
+        {}
     }
 }
 #endif

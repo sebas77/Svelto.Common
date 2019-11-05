@@ -11,15 +11,15 @@ namespace Svelto.DataStructures
     /// <typeparam name="T">the type of item to be stored</typeparam>
     public class RingBuffer<T>
     {
-        readonly T[] _entries;
-        readonly int _modMask;
+        readonly T[]        _entries;
+        readonly int        _modMask;
         Volatile.PaddedLong _consumerCursor = new Volatile.PaddedLong();
         Volatile.PaddedLong _producerCursor = new Volatile.PaddedLong();
 
-#if DEBUG && !PROFILER        
+#if DEBUG && !PROFILER
         readonly string _name;
 #endif
-        
+
         const int _NUMBER_OF_ITERATIONS_BEFORE_STALL_DETECTED = 1024;
 
         /// <summary>
@@ -32,9 +32,9 @@ namespace Svelto.DataStructures
             capacity = NextPowerOfTwo(capacity);
             _modMask = capacity - 1;
             _entries = new T[capacity];
-#if DEBUG && !PROFILER            
+#if DEBUG && !PROFILER
             _name = name;
-#endif            
+#endif
         }
 
         /// <summary>
@@ -52,18 +52,19 @@ namespace Svelto.DataStructures
         public ref T Dequeue()
         {
             var next = _consumerCursor.ReadAcquireFence() + 1;
-            
+
             int quickIterations = 0;
 
             // makes sure we read the data from _entries after we have read the producer cursor
-            while (_producerCursor.ReadAcquireFence() < next && quickIterations < _NUMBER_OF_ITERATIONS_BEFORE_STALL_DETECTED)
+            while (_producerCursor.ReadAcquireFence() < next &&
+                   quickIterations < _NUMBER_OF_ITERATIONS_BEFORE_STALL_DETECTED)
             {
                 ThreadUtility.Wait(ref quickIterations, 16);
             }
-#if DEBUG && !PROFILER                            
-            if (quickIterations >= _NUMBER_OF_ITERATIONS_BEFORE_STALL_DETECTED) 
+#if DEBUG && !PROFILER
+            if (quickIterations >= _NUMBER_OF_ITERATIONS_BEFORE_STALL_DETECTED)
                 throw new RingBufferExceptionDequeue<T>(_name, next);
-#endif            
+#endif
             _consumerCursor.WriteReleaseFence(next); // makes sure we read the data from _entries before we update the consumer cursor
             return ref this[next];
         }
@@ -83,39 +84,46 @@ namespace Svelto.DataStructures
                 obj = default(T);
                 return false;
             }
-            
+
             obj = Dequeue();
             return true;
         }
-        
+
         /// <summary>
         /// The number of items in the buffer
         /// </summary>
         /// <remarks>for indicative purposes only, may contain stale data</remarks>
-        public int Count => (int)(_producerCursor.ReadAcquireFence() - _consumerCursor.ReadAcquireFence());
+        public int Count => (int) (_producerCursor.ReadAcquireFence() - _consumerCursor.ReadAcquireFence());
 
-        public void Reset() { _consumerCursor.WriteReleaseFence(_producerCursor.ReadAcquireFence());}
+        public void Reset()
+        {
+            _consumerCursor.WriteReleaseFence(_producerCursor.ReadAcquireFence());
+        }
 
-        public void Enqueue(ref T item)
+        public void Enqueue(in T item)
         {
             var next = _producerCursor.ReadAcquireFence() + 1;
 
             long wrapPoint = next - _entries.Length;
             long min = _consumerCursor.ReadAcquireFence();
-            
+
             int quickIterations = 0;
 
             while (wrapPoint > min && quickIterations < _NUMBER_OF_ITERATIONS_BEFORE_STALL_DETECTED)
             {
                 min = _consumerCursor.ReadAcquireFence();
-                
+
                 ThreadUtility.Wait(ref quickIterations, 16);
             }
 
-#if DEBUG && !PROFILER                
-            if (quickIterations >= _NUMBER_OF_ITERATIONS_BEFORE_STALL_DETECTED) 
-                throw new RingBufferExceptionEnqueue<T>(_name, next);
-#endif            
+            if (quickIterations >= _NUMBER_OF_ITERATIONS_BEFORE_STALL_DETECTED)
+                throw new RingBufferExceptionEnqueue<T>(
+#if DEBUG && !PROFILER
+                    _name
+#else
+                    "consumer"
+#endif
+                    , next);
 
             this[next] = item;
             _producerCursor.WriteReleaseFence(next); // makes sure we write the data in _entries before we update the producer cursor
@@ -129,6 +137,7 @@ namespace Svelto.DataStructures
             {
                 result <<= 1;
             }
+
             return result;
         }
     }
@@ -137,15 +146,15 @@ namespace Svelto.DataStructures
     {
         public RingBufferExceptionDequeue(string name, long count) : base(
             "Consumer is consuming too fast. Type: "
-               .FastConcat(typeof(T).ToString(), " Consumer Name: ", name, " count ").FastConcat(count))
+                .FastConcat(typeof(T).ToString(), " Consumer Name: ", name, " count ").FastConcat(count))
         {}
     }
-    
+
     public class RingBufferExceptionEnqueue<T> : Exception
     {
         public RingBufferExceptionEnqueue(string name, long count) : base(
             "Entity Stream capacity has been saturated Type: "
-               .FastConcat(typeof(T).ToString(), " Consumer Name: ", name, " count ").FastConcat(count))
+                .FastConcat(typeof(T).ToString(), " Consumer Name: ", name, " count ").FastConcat(count))
         {}
     }
 
@@ -164,6 +173,7 @@ namespace Svelto.DataStructures
                 var value = ThreadUtility.VolatileRead(ref _value);
                 return value;
             }
+
             /// <summary>
             /// Write the value applying release fence semantic
             /// </summary>
