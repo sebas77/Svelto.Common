@@ -146,6 +146,19 @@ namespace Svelto.DataStructures
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref TValue GetOrCreate(TKey key, System.Func<TValue> builder)
+        {
+            if (TryFindIndex(key, out var findIndex))
+            {
+                return ref _values[findIndex];
+            }
+            
+            AddValue(key, builder(), out findIndex);
+            
+            return ref _values[findIndex];
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref TValue GetValueByRef(TKey key)
         {
             if (TryFindIndex(key, out var findIndex))

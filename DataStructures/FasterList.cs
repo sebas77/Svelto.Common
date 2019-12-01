@@ -103,7 +103,7 @@ namespace Svelto.DataStructures
 
     public struct FasterReadOnlyList<T> : IList<T>
     {
-        public static FasterReadOnlyList<T> DefaultList = new FasterReadOnlyList<T>(FasterList<T>.DefaultList);
+        internal static FasterReadOnlyList<T> DefaultEmptyList = new FasterReadOnlyList<T>(FasterList<T>.DefaultEmptyList);
 
         public int Count => _list.Count;
         public bool IsReadOnly => true;
@@ -503,7 +503,7 @@ namespace Svelto.DataStructures
 
     public class FasterList<T> : IList<T>
     {
-        public static readonly FasterList<T> DefaultList = new FasterList<T>();
+        internal static readonly FasterList<T> DefaultEmptyList = new FasterList<T>();
 
         const uint MIN_SIZE = 0;
 
