@@ -724,26 +724,47 @@ namespace Svelto.DataStructures
             _count = 0;
         }
         
-        public bool ReuseOneSlot<U>(out U result) where U:class, T
+        public bool ReuseOneSlot<U>(out U result) where U:T 
         {
-            result = null;
+            if (_count >= _buffer.Length)
+            {
+                result = default(U);
+                
+                return false;
+            }
 
+            if (default(U) == null)
+            {
+                result = (U) _buffer[_count];
+
+                if (result != null)
+                {
+                    _count++;
+
+                    return true;
+                }
+                
+                return false;
+            }
+
+            _count++;
+
+            result = default(U);
+
+            return true;
+        }
+        
+        public bool ReuseOneSlot<U>() where U: T
+        {
             if (_count >= _buffer.Length)
                 return false;
 
-            result = (U)_buffer[_count];
+            _count++;
 
-            if ((result is null) == false)
-            {
-                _count++;
-
-                return true;
-            }
-
-            return false;
+            return true;
         }
         
-        public bool ReuseOneSlot<U>() where U: struct, T
+        public bool ReuseOneSlot()
         {
             if (_count >= _buffer.Length)
                 return false;
