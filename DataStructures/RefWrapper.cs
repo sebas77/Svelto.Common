@@ -2,6 +2,11 @@ using System;
 
 namespace Svelto.DataStructures
 {
+    public static class TypeRefWrapper<T>
+    {
+        public static RefWrapper<Type> wrapper = new RefWrapper<Type>(typeof(T));        
+    }
+    
     public struct RefWrapper<T>: IEquatable<RefWrapper<T>> where T:class
     {
         public RefWrapper(T obj)

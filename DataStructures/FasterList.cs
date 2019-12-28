@@ -185,13 +185,13 @@ namespace Svelto.DataStructures
         {
             if (list == null) throw new ArgumentException("invalid list");
             _list = list;
-            _lockQ = new ReaderWriterLockSlim();
+            _lockQ = ReaderWriterLockSlimEx.Create();
         }
 
         public FasterListThreadSafe()
         {
             _list  = new FasterList<T>();
-            _lockQ = new ReaderWriterLockSlim();
+            _lockQ = ReaderWriterLockSlimEx.Create();
         }
 
         public int Count
@@ -425,7 +425,7 @@ namespace Svelto.DataStructures
 
         readonly FasterList<T> _list;
 
-        readonly ReaderWriterLockSlim _lockQ;
+        readonly ReaderWriterLockSlimEx _lockQ;
     }
 
     public struct FasterReadOnlyListCast<T, U> : IList<U> where U:T
@@ -938,7 +938,7 @@ namespace Svelto.DataStructures
         void AllocateMore()
         {
             var newList = new T[(_buffer.Length + 1) << 1];
-            if (_count > 0) _buffer.CopyTo(newList, 0);
+            if (_count > 0) Array.Copy(_buffer, newList, _count);
             _buffer = newList;
         }
 
@@ -992,11 +992,20 @@ namespace Svelto.DataStructures
                 _count = newSize;
         }
         
-        public uint Push(in T item)
+        public uint Enqueue(in T item)
         {
             Add(_count, item);
 
             return _count - 1;
+        }
+
+        public ref readonly T Dequeue() { --_count;
+            return ref _buffer[_count];
+        }
+
+        public ref readonly T Peek()
+        {
+            return ref _buffer[_count - 1];
         }
         
         T[] _buffer;
