@@ -3,12 +3,13 @@
   "category": "Svelto",
   "description": "Svelto common utilities and datastructures",
   "dependencies": {
-    "com.unity.collections": "0.3.0",
+    "com.unity.collections": "0.1.1-preview"
   },
   "keywords": [
-    "svelto",
+    "svelto"
   ],
   "name": "com.sebaslab.svelto.common",
   "unity": "2019.2",
-  "version": "2.9"
+  "version": "2.9.1",
+  "type": "library"
 }
