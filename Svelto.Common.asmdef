@@ -1,4 +1,16 @@
-﻿{
-	"name": "Svelto.Common",
-	"allowUnsafeCode" : true
+{
+    "name": "Svelto.Common",
+    "references": [
+        "Unity.Collections"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "System.Runtime.CompilerServices.Unsafe.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
 }

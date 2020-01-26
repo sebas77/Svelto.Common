@@ -10,8 +10,8 @@ namespace Svelto.Utilities
 {
     public static class FastInvoke<T> 
     {
-#if ENABLE_IL2CPP //Expression.Lambda may work now, it's something to test!
-        public static ActionCast<T> MakeSetter(FieldInfo field)
+#if ENABLE_IL2CPP 
+        public static FastInvokeActionCast<T> MakeSetter(FieldInfo field)
         {
             if (field.FieldType.IsInterfaceEx() == true && field.FieldType.IsValueTypeEx() == false)
             {
@@ -30,7 +30,7 @@ namespace Svelto.Utilities
 #elif !NETFX_CORE && !NET_STANDARD_2_0 && !UNITY_WSA_10_0 && !NETSTANDARD2_0 && !NET_4_6
         //https://stackoverflow.com/questions/1272454/generate-dynamic-method-to-set-a-field-of-a-struct-instead-of-using-reflection
         static readonly ILEmitter emit = new ILEmitter();
-        public static ActionCast<T> MakeSetter(FieldInfo field)
+        public static FastInvokeActionCast<T> MakeSetter(FieldInfo field)
         {
             if (field.FieldType.IsInterfaceEx() == true && field.FieldType.IsValueTypeEx() == false)
             {
@@ -48,7 +48,7 @@ namespace Svelto.Utilities
                     .SetField(field) //set value to field (stack 1) of object (stack 0)
                     .Return(); 
 
-                return (ActionCast<T>) setter.CreateDelegate(typeof(ActionCast<T>));
+                return (FastInvokeActionCast<T>) setter.CreateDelegate(typeof(FastInvokeActionCast<T>));
             }
             
             throw new ArgumentException("<color=teal>Svelto.ECS</color> unsupported field (must be an interface and a class)");
@@ -126,7 +126,7 @@ namespace Svelto.Utilities
         }
 #else
        //https://stackoverflow.com/questions/321650/how-do-i-set-a-field-value-in-an-c-sharp-expression-tree/321686#321686
-        public static ActionCast<T> MakeSetter(FieldInfo field)
+        public static FastInvokeActionCast<T> MakeSetter(FieldInfo field)
         {
             if (field.FieldType.IsInterfaceEx() == true && field.FieldType.IsValueTypeEx() == false)
             {
@@ -137,7 +137,7 @@ namespace Svelto.Utilities
                 UnaryExpression convertedExp = Expression.TypeAs(valueExp, field.FieldType);
                 BinaryExpression assignExp = Expression.Assign(fieldExp, convertedExp);
 
-                var setter = Expression.Lambda<ActionCast<T>>(assignExp, targetExp, valueExp).Compile();
+                var setter = Expression.Lambda<FastInvokeActionCast<T>>(assignExp, targetExp, valueExp).Compile();
 
                 return setter; 
             }
@@ -147,5 +147,5 @@ namespace Svelto.Utilities
 #endif
     }
     
-    public delegate void ActionCast<T>(ref T target, object value);
+    public delegate void FastInvokeActionCast<T>(ref T target, object value);
 }

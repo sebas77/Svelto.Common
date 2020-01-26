@@ -4,12 +4,12 @@ using System.Collections.Generic;
 namespace Svelto.ObjectPool
 {
     public class ObjectPool<T> : IObjectPool<T>, IDisposable
-#if DEBUG
+#if DEBUG && !PROFILE
                                , IObjectPoolDebug
 #endif
         where T : class
     {
-#if DEBUG
+#if DEBUG && !PROFILE
         readonly HashSet<T> alreadyRecycled = new HashSet<T>();
 #endif
 
@@ -17,7 +17,7 @@ namespace Svelto.ObjectPool
         {
             _pools.Clear();
             _namedPools.Clear();
-#if DEBUG
+#if DEBUG && !PROFILE
             alreadyRecycled.Clear();
 #endif
         }
@@ -107,7 +107,7 @@ namespace Svelto.ObjectPool
 
         protected void InternalRecycle(T obj, int pool)
         {
-#if DEBUG
+#if DEBUG && !PROFILE
             if (alreadyRecycled.Add(obj) == false)
                 throw new Exception("An object already Recycled in the pool has been Recycled again");
 #endif
@@ -121,7 +121,7 @@ namespace Svelto.ObjectPool
 
         protected void InternalRecycle(T obj, string poolName)
         {
-#if DEBUG
+#if DEBUG && !PROFILE
             if (alreadyRecycled.Add(obj) == false)
                 throw new Exception("An object already Recycled in the pool has been Recycled again");
 #endif
@@ -186,7 +186,7 @@ namespace Svelto.ObjectPool
             }
             else
             {
-#if DEBUG
+#if DEBUG && !PROFILE
                 alreadyRecycled.Remove(obj);
 #endif
                 _objectsReused++;
@@ -207,7 +207,7 @@ namespace Svelto.ObjectPool
         int _objectsCreated;
         int _objectsRecyled;
 
-#if DEBUG
+#if DEBUG && !PROFILE
         public List<ObjectPoolDebugStructureInt> DebugPoolInfo(List<ObjectPoolDebugStructureInt> debugInfo)
         {
             debugInfo.Clear();

@@ -15,12 +15,12 @@ namespace Svelto.DataStructures
     {
         public ThreadSafeDictionary(int size)
         {
-            dict = new FasterDictionary<TKey, TValue>((uint) size);
+            _dict = new FasterDictionary<TKey, TValue>((uint) size);
         }
 
         public ThreadSafeDictionary()
         {
-            dict = new FasterDictionary<TKey, TValue>();
+            _dict = new FasterDictionary<TKey, TValue>();
         }
 
         // setup the lock;
@@ -28,14 +28,14 @@ namespace Svelto.DataStructures
         {
             get
             {
-                LockQ.EnterReadLock();
+                _lockQ.EnterReadLock();
                 try
                 {
-                    return (uint)dict.Count;
+                    return (uint)_dict.count;
                 }
                 finally
                 {
-                    LockQ.ExitReadLock();
+                    _lockQ.ExitReadLock();
                 }
             }
         }
@@ -44,106 +44,106 @@ namespace Svelto.DataStructures
         {
             get
             {
-                LockQ.EnterReadLock();
+                _lockQ.EnterReadLock();
                 try
                 {
-                    return dict[key];
+                    return _dict[key];
                 }
                 finally
                 {
-                    LockQ.ExitReadLock();
+                    _lockQ.ExitReadLock();
                 }
             }
 
             set
             {
-                LockQ.EnterWriteLock();
+                _lockQ.EnterWriteLock();
                 try
                 {
-                    dict[key] = value;
+                    _dict[key] = value;
                 }
                 finally
                 {
-                    LockQ.ExitWriteLock();
+                    _lockQ.ExitWriteLock();
                 }
             }
         }
 
         public void Clear()
         {
-            LockQ.EnterWriteLock();
+            _lockQ.EnterWriteLock();
             try
             {
-                dict.Clear();
+                _dict.Clear();
             }
             finally
             {
-                LockQ.ExitWriteLock();
+                _lockQ.ExitWriteLock();
             }
         }
 
         public void Add(TKey key, TValue value)
         {
-            LockQ.EnterWriteLock();
+            _lockQ.EnterWriteLock();
             try
             {
-                dict.Add(key, value);
+                _dict.Add(key, value);
             }
             finally
             {
-                LockQ.ExitWriteLock();
+                _lockQ.ExitWriteLock();
             }
         }
         
         public void Add(TKey key, ref TValue value)
         {
-            LockQ.EnterWriteLock();
+            _lockQ.EnterWriteLock();
             try
             {
-                dict.Add(key, value);
+                _dict.Add(key, value);
             }
             finally
             {
-                LockQ.ExitWriteLock();
+                _lockQ.ExitWriteLock();
             }
         }
 
         public bool ContainsKey(TKey key)
         {
-            LockQ.EnterReadLock();
+            _lockQ.EnterReadLock();
             try
             {
-                return dict.ContainsKey(key);
+                return _dict.ContainsKey(key);
             }
             finally
             {
-                LockQ.ExitReadLock();
+                _lockQ.ExitReadLock();
             }
         }
 
         public bool Remove(TKey key)
         {
-            LockQ.EnterWriteLock();
+            _lockQ.EnterWriteLock();
             try
             {
-                return dict.Remove(key);
+                return _dict.Remove(key);
             }
             finally
             {
-                LockQ.ExitWriteLock();
+                _lockQ.ExitWriteLock();
             }
         }
 
         public bool TryGetValue(TKey key, out TValue value)
         {
-            LockQ.EnterReadLock();
+            _lockQ.EnterReadLock();
             try
             {
-                return dict.TryGetValue(key, out value);
+                return _dict.TryGetValue(key, out value);
             }
             finally
             {
-                LockQ.ExitReadLock();
+                _lockQ.ExitReadLock();
             }
         }
 
@@ -154,18 +154,18 @@ namespace Svelto.DataStructures
         /// <param name = "newValue">New Value</param>
         public void MergeSafe(TKey key, TValue newValue)
         {
-            LockQ.EnterWriteLock();
+            _lockQ.EnterWriteLock();
             try
             {
                 // take a writelock immediately since we will always be writing
-                if (dict.ContainsKey(key))
-                    dict.Remove(key);
+                if (_dict.ContainsKey(key))
+                    _dict.Remove(key);
 
-                dict.Add(key, newValue);
+                _dict.Add(key, newValue);
             }
             finally
             {
-                LockQ.ExitWriteLock();
+                _lockQ.ExitWriteLock();
             }
         }
 
@@ -175,55 +175,85 @@ namespace Svelto.DataStructures
         /// <param name = "key">Key to remove</param>
         public void RemoveSafe(TKey key)
         {
-            LockQ.EnterReadLock();
+            _lockQ.EnterReadLock();
             try
             {
-                if (dict.ContainsKey(key))
-                    LockQ.EnterWriteLock();
+                if (_dict.ContainsKey(key))
+                    _lockQ.EnterWriteLock();
                 try
                 {
-                    dict.Remove(key);
+                    _dict.Remove(key);
                 }
                 finally
                 {
-                    LockQ.ExitWriteLock();
+                    _lockQ.ExitWriteLock();
                 }
             }
             finally
             {
-                LockQ.ExitReadLock();
+                _lockQ.ExitReadLock();
             }
         }
 
-        // This is the internal dictionary that we are wrapping
         public void Update(TKey key, ref TValue value)
         {
-            LockQ.EnterWriteLock();
+            _lockQ.EnterWriteLock();
             try
             {
-                dict[key] = value;
+                _dict[key] = value;
             }
             finally
             {
-                LockQ.ExitWriteLock();
+                _lockQ.ExitWriteLock();
             }
         }
 
+        public void Set(TKey key, TValue value)
+        {
+            _lockQ.EnterWriteLock();
+            try
+            {
+                _dict.Set(key, value);
+            }
+            finally
+            {
+                _lockQ.ExitWriteLock();
+            }
+        }
+        
         public void CopyTo(TValue[] tasks)
         {
-            LockQ.EnterReadLock();
+            _lockQ.EnterReadLock();
             try
             {
-                Array.Copy(dict.valuesArray, tasks, dict.Count);
+                Array.Copy(_dict.unsafeValues, tasks, _dict.count);
             }
             finally
             {
-                LockQ.ExitReadLock();
+                _lockQ.ExitReadLock();
             }
         }
 
-        readonly FasterDictionary<TKey, TValue> dict;
-
-        readonly ReaderWriterLockSlimEx LockQ = ReaderWriterLockSlimEx.Create();
+        public void FastClear()
+        {
+            _lockQ.EnterWriteLock();
+            try
+            {
+                _dict.FastClear();
+            }
+            finally
+            {
+                _lockQ.ExitWriteLock();
+            }
+        }
+        
+        public void CopyTo(FasterList<TValue> transientEntitiesOperations)
+        {
+            transientEntitiesOperations.ExpandTo(_dict.count);
+            CopyTo(transientEntitiesOperations.ToArrayFast());
+        }
+        
+        readonly FasterDictionary<TKey, TValue> _dict;
+        readonly ReaderWriterLockSlimEx _lockQ = ReaderWriterLockSlimEx.Create();
     }
 }
