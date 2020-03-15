@@ -22,26 +22,26 @@ namespace Svelto
         static readonly ThreadLocal<StringBuilder> _stringBuilder =
             new ThreadLocal<StringBuilder>(() => new StringBuilder(256));
 
-        static readonly FasterList<DataStructures.WeakReference<ILogger>> _loggers;
+        static readonly FasterList<ILogger> _loggers;
 
         static ILogger _standardLogger;
 
         static Console()
         {
-            _loggers = new FasterList<DataStructures.WeakReference<ILogger>>();
+            _loggers = new FasterList<ILogger>();
 
             AddLogger(new SimpleLogger());
         }
 
         public static void SetLogger(ILogger log)
         {
-            _loggers[0] = new DataStructures.WeakReference<ILogger>(log);
+            _loggers[0] = log;
             log.OnLoggerAdded();
         }
 
         public static void AddLogger(ILogger log)
         {
-            _loggers.Add(new DataStructures.WeakReference<ILogger>(log));
+            _loggers.Add(log);
             log.OnLoggerAdded();
         }
 
@@ -49,13 +49,7 @@ namespace Svelto
         {
             for (int i = 0; i < _loggers.Count; i++)
             {
-                if (_loggers[i].IsValid == true)
-                    _loggers[i].Target.Log(txt, type, e, extraData);
-                else
-                {
-                    _loggers.UnorderedRemoveAt(i);
-                    i--;
-                }
+                    _loggers[i].Log(txt, type, e, extraData);
             }
         }
 
@@ -83,18 +77,15 @@ namespace Svelto
         public static void LogException(string message, Exception exception,
             Dictionary<string, string> extraData = null)
         {
-            if (extraData == null)
-                extraData = new Dictionary<string, string>();
-
             Exception tracingE = exception;
             while (tracingE.InnerException != null)
             {
                 tracingE = tracingE.InnerException;
 
-                Log(message, LogType.Exception, tracingE, extraData);
+                Log(message, LogType.Exception, tracingE);
             }
-
-            throw exception;
+            
+            Log(message, LogType.Exception, exception, extraData);
         }
 
         public static void LogWarning(string txt)

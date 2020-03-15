@@ -74,7 +74,7 @@ namespace Svelto.Utilities
                     else
                         stack = ExtractFormattedStackTrace();
 
-                    Debug.LogError("<b><color=red> ".FastConcat(txt, "</color><b> ", Environment.NewLine, stack)
+                    Debug.LogError("<b><color=red>".FastConcat(txt, "</color></b> ", Environment.NewLine, stack)
                         .FastConcat(Environment.NewLine, dataString));
                     break;
                 }
