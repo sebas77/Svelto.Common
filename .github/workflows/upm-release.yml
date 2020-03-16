@@ -11,7 +11,7 @@ on:
 jobs:
   build:
     env:
-      PKG_ROOT: Svelto.Common
+      PKG_NAME: Svelto.Common
       VERSION_JSON: version.json
       PKG_JSON: package.json
       LICENSE: LICENSE
@@ -26,6 +26,10 @@ jobs:
       run: |
         mkdir temp
         cp $VERSION_JSON temp
+        cp $PKG_JSON temp
+        cp $LICENSE temp
+        cp $README temp
+        rsync -r --exclude '.git' --exclude '.github' --exclude $VERSION_JSON . "temp/${PKG_NAME}"
 
     - name: checkout upm branch
       run: |
@@ -36,7 +40,16 @@ jobs:
       run: git clone https://github.com/Ujinjinjin/upm-preparator.git --branch v1.0.10 --single-branch
 
     - name: bump package version
-      run: python3 upm-preparator/version_bumpinator.py "temp/version.json" "package.json"
+      run: python3 upm-preparator/version_bumpinator.py "temp/version.json" "temp/package.json"
+
+    - name: move files from temp to root
+      run: python3 upm-preparator/structure_changinator.py "temp/${PKG_NAME}"
+
+    - name: move package.json & LICENSE & README from temp to root
+      run: |
+        mv "temp/package.json" .
+        mv "temp/LICENSE" .
+        mv "temp/README.md" .
 
     - name: generate meta files
       run: python3 upm-preparator/meta_makinator.py "package.json"
