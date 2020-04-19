@@ -9,6 +9,7 @@ namespace Svelto.DataStructures
 
         public uint  Count      => _list.count;
         public bool IsReadOnly => true;
+        public uint Capacity => _list.capacity;
 
         public FasterReadOnlyList(FasterList<T> list)
         {
@@ -34,9 +35,9 @@ namespace Svelto.DataStructures
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public T[] ToArrayFast()
+        public T[] ToArrayFast(out uint count)
         {
-            return _list.ToArrayFast();
+            return _list.ToArrayFast(out count);
         }
 
         readonly FasterList<T> _list;
