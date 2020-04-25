@@ -1,7 +1,8 @@
-{
-    "name": "Svelto.Common",
+﻿{
+    "name": "Svelto.Common_3",
     "references": [
-        "Unity.Collections"
+        "Unity.Collections",
+        "Unity.Burst"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -10,7 +11,14 @@
     "precompiledReferences": [
         "System.Runtime.CompilerServices.Unsafe.dll"
     ],
-    "autoReferenced": true,
+    "autoReferenced": false,
     "defineConstraints": [],
-    "versionDefines": []
+    "versionDefines": [
+        {
+            "name": "com.unity.collections",
+            "expression": "",
+            "define": "UNITY_COLLECTIONS"
+        }
+    ],
+    "noEngineReferences": false
 }

@@ -5,64 +5,52 @@ using System.Runtime.InteropServices;
 
 namespace Svelto.DataStructures
 {
-    public struct NativeBuffer<T>:IBuffer<T> where T:unmanaged
+    /// <summary>
+    /// MB stands for ManagedBuffer
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    public struct MB<T>:IBuffer<T> 
     {
-        public void Dispose()
+        public void Set(T[] array, uint count)
         {
-            if (_handle.IsAllocated)
-                _handle.Free();
-        }
-        
-        public unsafe NativeBuffer(T* array) : this()
-        {
-            _ptr = new IntPtr(array);
-        }
-
-        public NativeBuffer(T[] array) : this()
-        {
-            Set(array);
-        }
-        
-        public void Set(T[] array)
-        {
-            _handle = GCHandle.Alloc(array, GCHandleType.Pinned);
-            _ptr = _handle.AddrOfPinnedObject();
+            _count = count;
+            _buffer = array;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CopyFrom<TBuffer>(TBuffer array, uint startIndex, uint size) where TBuffer:IBuffer<T>
         {
-            throw new NotImplementedException();
+            array.CopyTo(_buffer, 0, startIndex, size);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CopyFrom(T[] source, uint sourceStartIndex, uint destinationStartIndex, uint size)
         {
-            throw new NotImplementedException();
+            Array.Copy(source, sourceStartIndex, _buffer, destinationStartIndex, size);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CopyTo(T[] destination, uint sourceStartIndex, uint destinationStartIndex, uint size)
         {
-            throw new NotImplementedException();
+            Array.Copy(_buffer, sourceStartIndex, destination, destinationStartIndex, size);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CopyFrom(ICollection<T> source)
         {
-            throw new NotImplementedException(); 
+            source.CopyTo(_buffer, source.Count); 
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear(uint startIndex, uint count)
         {
-            throw new NotImplementedException();
+            Array.Clear(_buffer, (int) startIndex, (int) count);
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear()
         {
-            throw new NotImplementedException();
+            Array.Clear(_buffer, (int) 0, (int) _buffer.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -74,43 +62,50 @@ namespace Svelto.DataStructures
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T[] ToManagedArray()
         {
+            return _buffer;
+        }
+
+        public IntPtr ToNativeArray()
+        {
             throw new NotImplementedException();
         }
 
-        public IntPtr ToNativeArray() { return _ptr; }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public GCHandle Pin()
+        {
+            return GCHandle.Alloc(_buffer, GCHandleType.Pinned);
+        }
 
-        public GCHandle Pin() { return _handle; }
+        public uint capacity
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => (uint) _buffer.Length;
+        }
+        
+        public uint count
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _count;
+        }
 
+        public void Dispose()
+        {
+            _buffer = null;
+        }
+        
         public ref T this[uint index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get
-            {
-                unsafe
-                {
-                    return ref ((T*) _ptr)[index];
-                    //return ref Unsafe.AsRef<T>(Unsafe.Add<T>((void*) _ptr, (int) index));
-                }
-            }
+            get => ref _buffer[index];
         }
-
+        
         public ref T this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get
-            {
-                unsafe
-                {
-                    return ref ((T*) _ptr)[index];
-                    //return ref Unsafe.AsRef<T>(Unsafe.Add<T>((void*) _ptr, (int) index));
-                }
-            }
+            get => ref _buffer[index];
         }
 
-        GCHandle _handle;
-#if ENABLE_BURST_AOT        
-        [Unity.Collections.LowLevel.Unsafe.NativeDisableUnsafePtrRestriction]
-#endif
-        IntPtr _ptr;
+        T[] _buffer;
+        uint _count;
     }
 }
