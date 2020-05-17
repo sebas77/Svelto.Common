@@ -13,7 +13,7 @@ namespace Svelto.DataStructures
     /// </summary>
     /// <typeparam name="TKey"></typeparam>
     /// <typeparam name="TValue"></typeparam>
-    public struct SetDictionary<TValue>: IFasterDictionary<uint, TValue>
+    public struct SetDictionary<TValue>
     {
         public SetDictionary(uint size):this()
         {
@@ -127,12 +127,6 @@ namespace Svelto.DataStructures
         }
 
         public void SetCapacity(uint size) { throw new NotImplementedException(); }
-
-        TValue IFasterDictionary<uint, TValue>.this[uint key]
-        {
-            get { throw new NotImplementedException(); } 
-            set { throw new NotImplementedException(); }
-        }
 
         public ref TValue this[uint key]
         {
@@ -256,7 +250,7 @@ namespace Svelto.DataStructures
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
-#if DEBUG && !PROFILER
+#if DEBUG && !PROFILE_SVELTO
                 if (_count != _dic.count)
                     throw new FasterDictionaryException("can't modify a dictionary during its iteration");
 #endif
