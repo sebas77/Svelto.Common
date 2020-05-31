@@ -435,15 +435,6 @@ namespace Svelto.DataStructures
                 valuesInfo[previous].next = next;
         }
         
-<<<<<<< HEAD
-=======
-        public NativeFasterDictionary<TK, TV> ToNative<TK, TV>() where TK : unmanaged, TKey, IEquatable<TK> 
-            where TV : unmanaged, TValue
-        {
-            return new NativeFasterDictionary<TK, TV>(_buckets, _values as TV[], _valuesInfo as FasterDictionaryNode<TK>[], _freeValueCellIndex);
-        }
-        
->>>>>>> 800c1a9abe35986fabb6562178e27d3b17c34b5c
         public struct FasterDictionaryKeyValueEnumerator
         {
             public FasterDictionaryKeyValueEnumerator(FasterDictionary<TKey, TValue> dic) : this()
