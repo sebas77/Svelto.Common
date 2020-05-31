@@ -9,7 +9,9 @@ namespace Svelto.DataStructures.Internal
     /// </summary>
     /// <typeparam name="TKey"></typeparam>
     /// <typeparam name="TValue"></typeparam>
-    public readonly unsafe struct NativeFasterDictionary<TKey, TValue> : IDisposable
+
+    //Todo: this must be internal
+    public unsafe struct NativeFasterDictionary<TKey, TValue> : IDisposable
         where TKey : unmanaged, IEquatable<TKey> where TValue : unmanaged
     {
         internal NativeFasterDictionary(int[] bufferBuckets, 
@@ -29,10 +31,11 @@ namespace Svelto.DataStructures.Internal
         public void Dispose()
         {
 #if DEBUG && !PROFILE_SVELTO
-            if ((IntPtr)_valuesPointer == IntPtr.Zero)
+            if ((IntPtr)_bucketsPointer == IntPtr.Zero)
                 throw new Exception("disposing an already disposed NativeFasterDictionary");
 #endif 
             _buckets.Free();
+            _bucketsPointer = IntPtr.Zero;
         }
 
         public TValue* unsafeValues
@@ -101,7 +104,7 @@ namespace Svelto.DataStructures.Internal
 #if UNITY_COLLECTIONS
         [Unity.Collections.LowLevel.Unsafe.NativeDisableUnsafePtrRestriction]
 #endif
-        readonly IntPtr _bucketsPointer;
+        IntPtr _bucketsPointer;
 #if UNITY_COLLECTIONS
 
         [Unity.Collections.LowLevel.Unsafe.NativeDisableUnsafePtrRestriction]

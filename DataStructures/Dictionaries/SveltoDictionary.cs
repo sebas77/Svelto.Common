@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Svelto.Common;
 using Svelto.DataStructures.Internal;
@@ -16,6 +17,7 @@ namespace Svelto.DataStructures
     /// </summary>
     /// <typeparam name="TKey"></typeparam>
     /// <typeparam name="TValue"></typeparam>
+    
     public class SveltoDictionary<TKey, TValue>: IDisposable where TKey : IEquatable<TKey>
     {
         public SveltoDictionary(IBufferStrategy<TValue> allocationStrategy):this(1, allocationStrategy)
@@ -23,23 +25,25 @@ namespace Svelto.DataStructures
 
         public SveltoDictionary(uint size, IBufferStrategy<TValue> allocationStrategy)
         {
-            if (UnmanagedTypeExtensions.IsUnmanaged<TKey>() == false)
+            //AllocationStrategy must be passed external for TValue because SveltoDictionary doesn't have struct
+            //constraint needed for the NativeVersion
+            if (UnmanagedTypeExtensions.IsUnmanaged<TKey>() == false 
+             || UnmanagedTypeExtensions.IsUnmanaged<TValue>() == false)
             {
-                 _valuesInfo = new ManagedStrategy<FasterDictionaryNode<TKey>>(size);
-             }
-             else
+                _valuesInfo = new ManagedStrategy<FasterDictionaryNode<TKey>>(size);
+            }
+            else
             {
                 _valuesInfo = new NativeStrategy<FasterDictionaryNode<TKey>>(size);
             }
-                
+            
             _buckets = new int[HashHelpers.GetPrime((int) size)];
             _values = allocationStrategy;
             _values.Alloc(size);
         }
         
-        public IBuffer<TValue> unsafeValues => _values.ToBuffer();
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //Not this should always be stored, never used directly
         public IBuffer<TValue> GetValues(out uint count)
         {
             count = _freeValueCellIndex;
@@ -82,7 +86,7 @@ namespace Svelto.DataStructures
             _freeValueCellIndex = 0;
         
             Array.Clear(_buckets, 0, _buckets.Length);
-            _valuesInfo.Clear();
+            _valuesInfo.FastClear();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -136,15 +140,19 @@ namespace Svelto.DataStructures
         
             return ref _values[(int) findIndex];
         }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref TValue GetDirectValueByRef(uint index)
+        {
+            return ref _values[index];
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref TValue GetValueByRef(TKey key)
         {
             if (TryFindIndex(key, out var findIndex) == true)
-            {
                 return ref _values[(int) findIndex];
-            }
-        
+
             throw new SveltoDictionaryException("Key not found");
         }
 
@@ -165,51 +173,21 @@ namespace Svelto.DataStructures
             set => AddValue(key, in value, out _);
         }
 
-        // struct UnBoxingWrapper<T> where T : struct
-        // {
-        //     internal IBufferStrategy<T> valuesInfo;
-        //
-        //     public ref T this[uint i]
-        //     {
-        //         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        //         get 
-        //         {
-        //             ref NativeStrategy<T> unboxed = ref Unsafe.Unbox<NativeStrategy<T>>(valuesInfo);
-        //
-        //             return ref unboxed.realBuffer[i];
-        //         }
-        //     }
-        //     
-        //     public ref T this[int i]
-        //     {
-        //         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        //         get 
-        //         {
-        //             ref NativeStrategy<T> unboxed = ref Unsafe.Unbox<NativeStrategy<T>>(valuesInfo);
-        //
-        //             return ref unboxed.realBuffer[i];
-        //         }
-        //     }
-        // }
-
         bool AddValue(TKey key, in TValue value, out uint indexSet)
         {
-            int hash = Hash(key);
+            int hash = key.GetHashCode();
             uint bucketIndex = Reduce((uint) hash, (uint) _buckets.Length);
 
-            IBufferStrategy<TValue> values = _values;
-            if (_freeValueCellIndex == values.capacity)
+            if (_freeValueCellIndex == _values.capacity)
             {
                 var expandPrime = HashHelpers.ExpandPrime((int) _freeValueCellIndex);
 
-                values.Resize((uint) expandPrime);
+                _values.Resize((uint) expandPrime);
                 _valuesInfo.Resize((uint) expandPrime);
             }
             
-         //   UnBoxingWrapper<FasterDictionaryNode<TKey>> valuesInfo;
-//            valuesInfo.valuesInfo = _valuesInfo;
-           // var valuesInfo = (NativeStrategy<FasterDictionaryNode<TKey>>) _valuesInfo;
-            var valuesInfo = _valuesInfo;
+            IBufferStrategy<TValue> values = _values;  //ToDo, this can be done with ToFast trick too
+            IBufferStrategy<FasterDictionaryNode<TKey>> valuesInfo = _valuesInfo; //ToDo, this can be done with ToFast trick too
 
             //buckets value -1 means it's empty
             var valueIndex = _buckets[bucketIndex] - 1;
@@ -254,17 +232,16 @@ namespace Svelto.DataStructures
             //I wouldn't need to update the bucket here. Small optimization but important
             _buckets[bucketIndex] = (int) (_freeValueCellIndex + 1);
 
-            values[(int) _freeValueCellIndex] = value;
+            values[_freeValueCellIndex] = value;
             indexSet = _freeValueCellIndex;
 
             _freeValueCellIndex++;
-
+            
             //too many collisions?
             if (_collisions > _buckets.Length)
             {
                 //we need more space and less collisions
                 _buckets = new int[HashHelpers.ExpandPrime((int) _collisions)];
-
                 _collisions = 0;
 
                 //we need to get all the hash code of all the values stored so far and spread them over the new bucket
@@ -310,7 +287,7 @@ namespace Svelto.DataStructures
 
         public bool Remove(TKey key)
         {
-            int hash = Hash(key);
+            int hash = key.GetHashCode();
             uint bucketIndex = Reduce((uint) hash, (uint) _buckets.Length);
 
             //find the bucket
@@ -392,7 +369,7 @@ namespace Svelto.DataStructures
 
                 //finally, actually move the values
                 valuesInfo[indexToValueToRemove] = valuesInfo[_freeValueCellIndex];
-                _values[indexToValueToRemove] = _values[(int) _freeValueCellIndex];
+                _values[indexToValueToRemove] = _values[_freeValueCellIndex];
             }
 
             return true;
@@ -405,14 +382,12 @@ namespace Svelto.DataStructures
         }
 
         //I store all the index with an offset + 1, so that in the bucket list 0 means actually not existing.
-
         //When read the offset must be offset by -1 again to be the real one. In this way
-
         //I avoid to initialize the array to -1
 
         public bool TryFindIndex(TKey key, out uint findIndex)
         {
-            int hash = Hash(key);
+            int hash = key.GetHashCode();
             uint bucketIndex = Reduce((uint) hash, (uint) _buckets.Length);
 
             int valueIndex = _buckets[bucketIndex] - 1;
@@ -448,18 +423,6 @@ namespace Svelto.DataStructures
                                                                  where TV : unmanaged, TValue
         {
             return new NativeFasterDictionary<TK, TV>(_buckets, _values.ToNativeArray(), _valuesInfo.ToNativeArray(), _freeValueCellIndex, (uint) _values.capacity);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static int Hash(TKey key)
-        {
-            if (typeof(TKey) == typeof(uint))
-                return Unsafe.As<TKey, int>(ref key);
-            
-            if (typeof(TKey) == typeof(int))
-                return Unsafe.As<TKey, int>(ref key);
-            
-            return key.GetHashCode();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -533,25 +496,17 @@ namespace Svelto.DataStructures
             }
 
             public TKey Key   => key;
+            //todo: I can't use ToFast here, unboxing would be slower than indexing the array in a IBuffer. I have to use the Strategy here
             public ref TValue Value => ref _dicValues[_index];
-        }
-
-        /// <summary>
-        /// Note: I am still not 100% sure if it should be the FasterDictionary responsibility to dispose the allocation
-        /// strategy. 
-        /// </summary>
-        void ReleaseUnmanagedResources()
-        {
-            // TODO release unmanaged resources here
         }
 
         void Dispose(bool disposing)
         {
-            ReleaseUnmanagedResources();
-            if (disposing)
-            {
-                _values.Dispose();
-            }
+            if (disposing == false && UnmanagedTypeExtensions.IsUnmanaged<TValue>() == true)
+                Console.LogDebugWarning($"Svelto Dictionary has been disposed through finalizer. Should be disposed manually when native memory is used. Type held: {typeof(TValue)}");
+
+            _valuesInfo.Dispose();
+            _values.Dispose();
         }
 
         public void Dispose()
@@ -564,11 +519,11 @@ namespace Svelto.DataStructures
             Dispose(false);
         }
 
-        readonly IBufferStrategy<FasterDictionaryNode<TKey>> _valuesInfo;
+        IBufferStrategy<FasterDictionaryNode<TKey>> _valuesInfo;
         int[]                            _buckets;
         uint                             _freeValueCellIndex;
         uint                             _collisions;
-        readonly IBufferStrategy<TValue> _values;
+        IBufferStrategy<TValue> _values;
     }
     
     public class SveltoDictionaryException : Exception

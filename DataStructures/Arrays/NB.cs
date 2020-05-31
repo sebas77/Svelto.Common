@@ -32,20 +32,14 @@ namespace Svelto.DataStructures
             _capacity = capacity;
         }
 
-        public void Set(IntPtr array, uint capacity)
-        {
-            _ptr      = array;
-            _capacity = capacity;
-        }
-
         public void CopyTo(uint sourceStartIndex, T[] destination, uint destinationStartIndex, uint size) { throw new NotImplementedException(); }
         public void Clear()
         {
-            unsafe
-            {
-                Unsafe.InitBlock((void *)_ptr, 0, (uint) (_capacity * MemoryUtilities.SizeOf<T>()));
-            }
+            MemoryUtilities.MemClear(_ptr, (uint) (_capacity * MemoryUtilities.SizeOf<T>()));
         }
+
+        public void FastClear()
+        { }
 
         public T[] ToManagedArray()
         {
@@ -67,8 +61,6 @@ namespace Svelto.DataStructures
         public ref T this[uint index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
-            [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
             get
             {
                 unsafe
@@ -76,8 +68,10 @@ namespace Svelto.DataStructures
 #if DEBUG && !PROFILE_SVELTO
                     if (index >= _capacity)
                         throw new Exception("NativeBuffer - out of bound access");
-#endif                    
-                    return ref Unsafe.AsRef<T>(Unsafe.Add<T>((void*) _ptr, (int) index));
+#endif
+                    var size = MemoryUtilities.SizeOf<T>();
+                    ref var asRef = ref Unsafe.AsRef<T>((void*) (_ptr + (int) (index * size)));
+                    return ref asRef;
                 }
             }
         }
@@ -85,29 +79,28 @@ namespace Svelto.DataStructures
         public ref T this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Unity.IL2CPP.CompilerServices.Option.NullChecks, false)]
-            [Unity.IL2CPP.CompilerServices.Il2CppSetOption(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false)]
             get
             {
                 unsafe
                 {
 #if DEBUG && !PROFILE_SVELTO
-                    if (index >= _capacity)
+                    if (index < 0 || index >= _capacity)
                         throw new Exception("NativeBuffer - out of bound access");
-#endif                    
-                    
-                    return ref Unsafe.AsRef<T>(Unsafe.Add<T>((void*) _ptr, (int) index));
+#endif
+                    var size = MemoryUtilities.SizeOf<T>();
+                    ref var asRef = ref Unsafe.AsRef<T>((void*) (_ptr + (int) (index * size)));
+                    return ref asRef;
                 }
             }
         }
 
-        uint _capacity;
+        readonly uint _capacity;
 #if UNITY_COLLECTIONS
         //todo can I remove this from here? it should be used outside
         [Unity.Burst.NoAlias]
         [Unity.Collections.LowLevel.Unsafe.NativeDisableUnsafePtrRestriction]
 #endif
-        public IntPtr _ptr;
+        IntPtr _ptr; 
 
         public NB<T> AsReader() { return this; }
         public NB<T> AsWriter() { return this; }
