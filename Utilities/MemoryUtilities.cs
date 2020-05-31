@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 #if DEBUG && !PROFILE_SVELTO
 #define DEBUG_MEMORY
 #endif
@@ -6,6 +7,18 @@ using System;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
+=======
+using System;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+
+#if !UNITY_COLLECTIONS
+using System.Runtime.InteropServices;
+#else
+using Unity.Collections.LowLevel.Unsafe;
+#endif
+>>>>>>> 800c1a9abe35986fabb6562178e27d3b17c34b5c
 namespace Svelto.Common
 {
 #if !UNITY_COLLECTIONS
@@ -44,6 +57,7 @@ namespace Svelto.Common
 #endif
 
     public static class MemoryUtilities
+<<<<<<< HEAD
     {    
 #if UNITY_EDITOR && !UNITY_COLLECTIONS        
         static MemoryUtilities()
@@ -130,17 +144,63 @@ namespace Svelto.Common
        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void MemClear(IntPtr destination, uint sizeOf)
+=======
+    {
+#if UNITY_5_3_OR_NEWER && !UNITY_COLLECTIONS        
+        static MemoryUtilities()
         {
-            unsafe 
+            throw new Exception("Svelto.Common MemoryUtilities needs the Unity Collection package");      
+        }
+#endif
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Free(IntPtr ptr, Allocator allocator)
+        {
+            unsafe
             {
 #if UNITY_COLLECTIONS
-                Unity.Collections.LowLevel.Unsafe.UnsafeUtility.MemClear((void*) destination, sizeOf);
+                UnsafeUtility.Free((void*) ptr, (Unity.Collections.Allocator) allocator);
 #else
-               Unsafe.InitBlock((void*) destination, 0, sizeOf);
+                Marshal.FreeHGlobal((IntPtr) ptr);
 #endif
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static IntPtr Alloc<T>(uint newCapacity, Allocator allocator) where T : struct
+        {
+            unsafe
+            {
+#if UNITY_COLLECTIONS
+                var newPointer =
+                    UnsafeUtility.Malloc(newCapacity, (int) UnsafeUtility.AlignOf<T>(), (Unity.Collections.Allocator) allocator);
+#else
+                var newPointer = Marshal.AllocHGlobal((int) newCapacity);
+#endif
+                return (IntPtr) newPointer;
+            }
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void MemClear(IntPtr listData, uint sizeOf)
+>>>>>>> 800c1a9abe35986fabb6562178e27d3b17c34b5c
+        {
+            unsafe 
+            {
+#if UNITY_COLLECTIONS
+<<<<<<< HEAD
+                Unity.Collections.LowLevel.Unsafe.UnsafeUtility.MemClear((void*) destination, sizeOf);
+#else
+               Unsafe.InitBlock((void*) destination, 0, sizeOf);
+=======
+               UnsafeUtility.MemClear((void*) listData, sizeOf);
+#else
+               Unsafe.InitBlock((void*) listData, 0, sizeOf);
+>>>>>>> 800c1a9abe35986fabb6562178e27d3b17c34b5c
+#endif
+            }
+        }
+
+<<<<<<< HEAD
         static class OptimalAlignment
         {
             internal static readonly uint alignment;
@@ -162,6 +222,17 @@ namespace Svelto.Common
         public static int SizeOf<T>() where T : struct
         {
             return (int) CachedSize<T>.cachedSize;
+=======
+        static class CachedSize<T> where T : struct
+        {
+            public static readonly int cachedSize = Unsafe.SizeOf<T>();
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int SizeOf<T>() where T : struct
+        {
+            return CachedSize<T>.cachedSize;
+>>>>>>> 800c1a9abe35986fabb6562178e27d3b17c34b5c
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -180,10 +251,17 @@ namespace Svelto.Common
                 return ref Unsafe.AsRef<T>(Unsafe.Add<T>((void*) data, threadIndex));
             }
         }
+<<<<<<< HEAD
+=======
+        
+        public static int GetFieldOffset(RuntimeFieldHandle h) => 
+            Marshal.ReadInt32(h.Value + (4 + IntPtr.Size)) & 0xFFFFFF;
+>>>>>>> 800c1a9abe35986fabb6562178e27d3b17c34b5c
 
         public static int GetFieldOffset(FieldInfo field)
         {
 #if UNITY_COLLECTIONS
+<<<<<<< HEAD
             return Unity.Collections.LowLevel.Unsafe.UnsafeUtility.GetFieldOffset(field);
 #else
             int GetFieldOffset(RuntimeFieldHandle h) => 
@@ -269,6 +347,11 @@ namespace Svelto.Common
                 if (u != 0xDEADBEEF)
                     throw new Exception();
             }
+=======
+            return UnsafeUtility.GetFieldOffset(field);
+#else
+            return GetFieldOffset(field.name);
+>>>>>>> 800c1a9abe35986fabb6562178e27d3b17c34b5c
 #endif
         }
     }

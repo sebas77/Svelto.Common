@@ -174,7 +174,11 @@ namespace Svelto.DataStructures
         public void FastClear()
         {
 #if DEBUG && !PROFILE_SVELTO
+<<<<<<< HEAD
             if (Svelto.Common.TypeCache<T>.type.IsClass)
+=======
+            if (TypeCache<T>.type.IsClass)
+>>>>>>> 800c1a9abe35986fabb6562178e27d3b17c34b5c
                 Console.LogWarning(
                     "Warning: objects held by this list won't be garbage collected. Use ResetToReuse or Clear " +
                     "to avoid this warning");
