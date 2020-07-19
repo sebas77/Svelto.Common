@@ -59,6 +59,7 @@ namespace Svelto.Common
             {
                 var signedCapacity = (int) SignedCapacity(newCapacity);
 #if UNITY_COLLECTIONS
+<<<<<<< HEAD
                 var allocator1 = (Unity.Collections.Allocator) allocator;
                 var newPointer =
                     Unity.Collections.LowLevel.Unsafe.UnsafeUtility.Malloc(signedCapacity, (int) OptimalAlignment.alignment, allocator1);
@@ -68,6 +69,16 @@ namespace Svelto.Common
                 //Note MemClear is actually necessary
                 MemClear((IntPtr) newPointer, (uint) signedCapacity);
           
+=======
+                var newPointer =
+                    Unity.Collections.LowLevel.Unsafe.UnsafeUtility.Malloc(signedCapacity, (int) OptimalAlignment.alignment, (Unity.Collections.Allocator) allocator);
+#else
+                var newPointer = System.Runtime.InteropServices.Marshal.AllocHGlobal(signedCapacity);
+#endif
+#if DEBUG && !PROFILE_SVELTO
+                MemClear((IntPtr) newPointer, (uint) signedCapacity);
+#endif          
+>>>>>>> dfdce3b4c46481199a04d9cfea6488a1a66a91cb
                 var signedPointer = SignedPointer(newCapacity, (IntPtr) newPointer);
 
                 CheckBoundaries((IntPtr) newPointer);

@@ -7,8 +7,14 @@ namespace Svelto.DataStructures
         public static FasterReadOnlyList<T> DefaultEmptyList = new FasterReadOnlyList<T>(
             FasterList<T>.DefaultEmptyList);
 
+<<<<<<< HEAD
         public uint count      => _list.count;
         public uint capacity => _list.capacity;
+=======
+        public uint  count      => _list.count;
+        public bool IsReadOnly => true;
+        public uint Capacity => _list.capacity;
+>>>>>>> dfdce3b4c46481199a04d9cfea6488a1a66a91cb
 
         public FasterReadOnlyList(FasterList<T> list)
         {

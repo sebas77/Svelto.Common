@@ -10,6 +10,10 @@
   ],
   "name": "com.sebaslab.svelto.common",
   "unity": "2019.2",
+<<<<<<< HEAD
   "version": "3.0.0",
+=======
+  "version": "2.9.4",
+>>>>>>> dfdce3b4c46481199a04d9cfea6488a1a66a91cb
   "type": "library"
 }
