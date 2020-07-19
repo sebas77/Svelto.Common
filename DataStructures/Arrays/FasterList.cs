@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Svelto.Common;
 
 namespace Svelto.DataStructures
 {
@@ -11,6 +10,11 @@ namespace Svelto.DataStructures
         
         public uint count => _count;
         public uint capacity => (uint) _buffer.Length;
+        
+        public static explicit operator FasterList<T>(T[] array)
+        {
+            return new FasterList<T>(array);
+        }
 
         public FasterList()
         {
@@ -72,7 +76,16 @@ namespace Svelto.DataStructures
 
             _count = (uint) source.count;
         }
+        
+        public FasterList(in FasterReadOnlyList<T> source)
+        {
+            _buffer = new T[ source.count];
 
+            source.CopyTo(_buffer, 0);
+
+            _count = (uint) source.count;
+        }
+        
         public ref T this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -94,12 +107,14 @@ namespace Svelto.DataStructures
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add(in T item)
+        public FasterList<T> Add(in T item)
         {
             if (_count == _buffer.Length)
                 AllocateMore();
 
             _buffer[_count++] = item;
+
+            return this;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -122,9 +137,19 @@ namespace Svelto.DataStructures
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void AddRange(in FasterList<T> items)
+        public FasterList<T> AddRange(in FasterList<T> items)
         {
             AddRange(items._buffer, (uint) items.count);
+
+            return this;
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public FasterList<T> AddRange(in FasterReadOnlyList<T> items)
+        {
+            AddRange(items._list._buffer, (uint) items.count);
+
+            return this;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -165,7 +190,7 @@ namespace Svelto.DataStructures
         public void FastClear()
         {
 #if DEBUG && !PROFILE_SVELTO
-            if (TypeCache<T>.type.IsClass)
+            if (Svelto.Common.TypeCache<T>.type.IsClass)
                 Console.LogWarning(
                     "Warning: objects held by this list won't be garbage collected. Use ResetToReuse or Clear " +
                     "to avoid this warning");

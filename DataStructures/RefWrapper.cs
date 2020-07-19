@@ -1,4 +1,5 @@
 using System;
+using Svelto.Common;
 
 namespace Svelto.DataStructures
 {
@@ -7,7 +8,7 @@ namespace Svelto.DataStructures
         public static RefWrapper<Type> wrapper = new RefWrapper<Type>(typeof(T));        
     }
     
-    public struct RefWrapper<T>: IEquatable<RefWrapper<T>> where T:class
+    public readonly struct RefWrapper<T>: IEquatable<RefWrapper<T>> where T:class
     {
         public RefWrapper(T obj)
         {
@@ -16,12 +17,12 @@ namespace Svelto.DataStructures
 
         public bool Equals(RefWrapper<T> other)
         {
-            return _value.Equals(other._value);
+            return _value == other._value;
         }
         
         public override int GetHashCode()
         {
-            return _value.GetHashCode();
+            return TypeHash<T>.hash;
         }
         
         public static implicit operator T(RefWrapper<T> t) => t._value;

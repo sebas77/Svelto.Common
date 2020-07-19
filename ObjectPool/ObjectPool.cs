@@ -35,6 +35,12 @@ namespace Svelto.ObjectPool
             _disposed = true;
         }
         
+        public void Clear()
+        {
+            _pools.Clear();
+            _namedPools.Clear();
+        }
+        
         public virtual void Recycle(T go, int pool)
         {
             InternalRecycle(go, pool);

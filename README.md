@@ -1,2 +1,2 @@
-# Svelto.Common 3.0 BETA
+# Svelto.Common
 Shared code between the Svelto repository

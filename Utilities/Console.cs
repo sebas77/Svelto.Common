@@ -109,7 +109,12 @@ namespace Svelto
         [Conditional("DEBUG")]
         public static void LogDebug<T>(string txt, T extradebug)
         {
-            InternalLog(txt.FastConcat(Environment.NewLine, extradebug.ToString()), LogType.Log);
+            InternalLog(txt.FastConcat(extradebug.ToString()), LogType.Log);
+        }
+
+        public static void LogDebugWarning(string txt)
+        {
+            InternalLog(txt, LogType.Warning); 
         }
 
         /// <summary>

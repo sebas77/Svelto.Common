@@ -23,6 +23,8 @@ namespace Svelto.Utilities
             _stringBuilder = new ThreadLocal<StringBuilder>(ValueFactory);
 
             Console.SetLogger(new SlowUnityLogger());
+
+            MAINTHREADID = Environment.CurrentManagedThreadId;
         }
 
         public void Log(string txt, LogType type = LogType.Log, Exception e = null,
@@ -74,8 +76,16 @@ namespace Svelto.Utilities
 #if UNITY_EDITOR                    
                     var fastConcat = "<b><color=red>".FastConcat(txt, "</color></b> ", Environment.NewLine, stack)
                         .FastConcat(Environment.NewLine, dataString);
-                    
-                    Debug.LogError(fastConcat);
+
+                    if (MAINTHREADID == Environment.CurrentManagedThreadId)
+                    {
+                        var error = Application.GetStackTraceLogType(UnityEngine.LogType.Error);
+                        Application.SetStackTraceLogType(UnityEngine.LogType.Error, StackTraceLogType.None);
+                        Debug.LogError(fastConcat);
+                        Application.SetStackTraceLogType(UnityEngine.LogType.Error, error);
+                    }
+                    else
+                        Debug.LogError(txt);
 #else
                     if (type == LogType.Error)
                         Debug.LogError(txt);
@@ -203,6 +213,7 @@ namespace Svelto.Utilities
         static ThreadLocal<StringBuilder> _stringBuilder;
 
         static string projectFolder;
+        static int MAINTHREADID;
     }
 }
 #endif
