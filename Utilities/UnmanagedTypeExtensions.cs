@@ -10,9 +10,9 @@ namespace Svelto.Common
         static readonly Dictionary<Type, bool> cachedTypes =
             new Dictionary<Type, bool>();
 
-        public static bool IsUnmanaged<T>() { return typeof(T).IsUnmanaged(); }
+        public static bool IsUnmanagedEx<T>() { return typeof(T).IsUnmanagedEx(); }
 
-        public static bool IsUnmanaged(this Type t)
+        public static bool IsUnmanagedEx(this Type t)
         {
             var result = false;
             
@@ -24,11 +24,11 @@ namespace Svelto.Common
             else
                 if (t.IsValueType && t.IsGenericType)
                 {
-                    var areGenericTypesAllBlittable = t.GenericTypeArguments.All(x => IsUnmanaged(x));
+                    var areGenericTypesAllBlittable = t.GenericTypeArguments.All(x => IsUnmanagedEx(x));
                     if (areGenericTypesAllBlittable)
                         result = t.GetFields(BindingFlags.Public | 
                                              BindingFlags.NonPublic | BindingFlags.Instance)
-                                  .All(x => IsUnmanaged(x.FieldType));
+                                  .All(x => IsUnmanagedEx(x.FieldType));
                     else
                         return false;
                 }
@@ -36,7 +36,7 @@ namespace Svelto.Common
                 if (t.IsValueType)
                     result = t.GetFields(BindingFlags.Public | 
                                          BindingFlags.NonPublic | BindingFlags.Instance)
-                              .All(x => IsUnmanaged(x.FieldType));
+                              .All(x => IsUnmanagedEx(x.FieldType));
 
             cachedTypes.Add(t, result);
             return result;

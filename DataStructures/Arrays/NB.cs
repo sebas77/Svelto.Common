@@ -22,7 +22,7 @@ namespace Svelto.DataStructures
     {
         static NB()
         {
-            if (UnmanagedTypeExtensions.IsUnmanaged<T>() == false)
+            if (UnmanagedTypeExtensions.IsUnmanagedEx<T>() == false)
                 throw new Exception("NativeBuffer (NB) supports only unmanaged types");
         }
         
