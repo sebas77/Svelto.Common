@@ -33,6 +33,14 @@ namespace Svelto.DataStructures
             return _values.ToBuffer();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public IBuffer<FasterDictionaryNode<TKey>> GetKeys(out uint count)
+        {
+            count = _freeValueCellIndex;
+
+            return _valuesInfo.ToBuffer();
+        }
+
         //I should put it back to int
         public uint count => _freeValueCellIndex;
 
