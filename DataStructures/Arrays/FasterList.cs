@@ -7,10 +7,10 @@ namespace Svelto.DataStructures
     public class FasterList<T>
     {
         internal static readonly FasterList<T> DefaultEmptyList = new FasterList<T>();
-        
+
         public uint count => _count;
         public uint capacity => (uint) _buffer.Length;
-        
+
         public static explicit operator FasterList<T>(T[] array)
         {
             return new FasterList<T>(array);
@@ -64,10 +64,10 @@ namespace Svelto.DataStructures
             _buffer = new T[(uint) collection.Count + (uint)extraSize];
 
             collection.CopyTo(_buffer, 0);
-            
+
             _count = (uint) collection.Count;
         }
-        
+
         public FasterList(in FasterList<T> source)
         {
             _buffer = new T[ source.count];
@@ -76,7 +76,7 @@ namespace Svelto.DataStructures
 
             _count = (uint) source.count;
         }
-        
+
         public FasterList(in FasterReadOnlyList<T> source)
         {
             _buffer = new T[ source.count];
@@ -85,7 +85,7 @@ namespace Svelto.DataStructures
 
             _count = (uint) source.count;
         }
-        
+
         public ref T this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -105,7 +105,7 @@ namespace Svelto.DataStructures
                 return ref _buffer[index];
             }
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public FasterList<T> Add(in T item)
         {
@@ -124,7 +124,7 @@ namespace Svelto.DataStructures
 
             _buffer[location] = item;
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T CreateOrGetAt(uint location)
         {
@@ -143,7 +143,7 @@ namespace Svelto.DataStructures
 
             return this;
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public FasterList<T> AddRange(in FasterReadOnlyList<T> items)
         {
@@ -163,13 +163,13 @@ namespace Svelto.DataStructures
             Array.Copy(items, 0, _buffer, _count, count);
             _count += count;
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddRange(T[] items)
         {
             AddRange(items, (uint) items.Length);
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Contains(T item)
         {
@@ -197,7 +197,7 @@ namespace Svelto.DataStructures
 #endif
             _count = 0;
         }
-        
+
         /// <summary>
         /// this is a dirtish trick to be able to use the index operator
         /// before adding the elements through the Add functions
@@ -226,7 +226,7 @@ namespace Svelto.DataStructures
 
             return list;
         }
-        
+
         public static FasterList<T> PreInit(uint initialSize)
         {
             var list = new FasterList<T>(initialSize);
@@ -235,19 +235,19 @@ namespace Svelto.DataStructures
 
             return list;
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ResetToReuse()
         {
             _count = 0;
         }
 
-        public bool ReuseOneSlot<U>(out U result) where U:T 
+        public bool ReuseOneSlot<U>(out U result) where U:T
         {
             if (_count >= _buffer.Length)
             {
                 result = default(U);
-                
+
                 return false;
             }
 
@@ -267,7 +267,7 @@ namespace Svelto.DataStructures
             result = default(U);
             return true;
         }
-        
+
         public bool ReuseOneSlot<U>() where U: T
         {
             if (_count >= _buffer.Length)
@@ -277,7 +277,7 @@ namespace Svelto.DataStructures
 
             return true;
         }
-        
+
         public bool ReuseOneSlot()
         {
             if (_count >= _buffer.Length)
@@ -305,12 +305,14 @@ namespace Svelto.DataStructures
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Insert(int index, in T item)
         {
-            DBC.Common.Check.Require(index < _count, "out of bound index");
+            DBC.Common.Check.Require(index <= _count, "out of bound index");
 
             if (_count == _buffer.Length) AllocateMore();
 
             Array.Copy(_buffer, index, _buffer, index + 1, _count - index);
             ++_count;
+
+            _buffer[index] = item;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -330,7 +332,7 @@ namespace Svelto.DataStructures
         public void Resize(uint newSize)
         {
             if (newSize == _buffer.Length) return;
-            
+
             Array.Resize(ref _buffer, (int) newSize);
         }
 
@@ -419,7 +421,7 @@ namespace Svelto.DataStructures
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref readonly T Pop() { 
+        public ref readonly T Pop() {
             --_count;
             return ref _buffer[_count];
         }
@@ -429,13 +431,13 @@ namespace Svelto.DataStructures
         {
             return ref _buffer[_count - 1];
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CopyTo(T[] array, int arrayIndex)
         {
             Array.Copy(_buffer, 0, array, arrayIndex, count);
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void AllocateMore()
         {
