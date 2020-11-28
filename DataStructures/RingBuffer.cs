@@ -170,7 +170,7 @@ namespace Svelto.DataStructures
             /// <returns>The current value</returns>
             public long ReadAcquireFence()
             {
-                var value = ThreadUtility.VolatileRead(ref _value);
+                var value = System.Threading.Volatile.Read(ref _value);
                 return value;
             }
 
@@ -180,7 +180,7 @@ namespace Svelto.DataStructures
             /// <param name="newValue">The new value</param>
             public void WriteReleaseFence(long newValue)
             {
-                ThreadUtility.VolatileWrite(ref _value, newValue);
+                System.Threading.Volatile.Write(ref _value, newValue);
             }
         }
     }

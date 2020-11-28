@@ -1,10 +1,33 @@
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Svelto.Common;
 
 namespace Svelto.DataStructures
 {
-    /// <summary>
+    internal sealed class NBDebugProxy<T> where T : struct
+    {
+        private NB<T> m_Array;
+
+        public NBDebugProxy(NB<T> array)
+        {
+            this.m_Array = array;
+        }
+
+        public T[] Items
+        {
+            get
+            {
+                T[] array = new T[m_Array.capacity];
+                
+                m_Array.CopyTo(0, array, 0, (uint) m_Array.capacity);
+
+                return array;
+            }
+        }
+    }
+
+/// <summary>
     /// NB stands for NB
     /// NativeBuffers are current designed to be used inside Jobs. They wrap an EntityDB array of components
     /// but do not track it. Hence it's meant to be used temporary and locally as the array can become invalid
@@ -18,11 +41,13 @@ namespace Svelto.DataStructures
     /// 
     /// </summary>
     /// <typeparam name="T"></typeparam>
+    
+    [DebuggerTypeProxy(typeof(NBDebugProxy<>))]
     public struct NB<T>:IBuffer<T> where T:struct
     {
         static NB()
         {
-            if (UnmanagedTypeExtensions.IsUnmanagedEx<T>() == false)
+            if (TypeCache<T>.IsUnmanaged == false)
                 throw new Exception("NativeBuffer (NB) supports only unmanaged types");
         }
         
@@ -32,7 +57,13 @@ namespace Svelto.DataStructures
             _capacity = capacity;
         }
 
-        public void CopyTo(uint sourceStartIndex, T[] destination, uint destinationStartIndex, uint size) { throw new NotImplementedException(); }
+        public void CopyTo(uint sourceStartIndex, T[] destination, uint destinationStartIndex, uint count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                destination[i] = this[i];
+            }
+        }
         public void Clear()
         {
             MemoryUtilities.MemClear(_ptr, (uint) (_capacity * MemoryUtilities.SizeOf<T>()));
@@ -57,6 +88,8 @@ namespace Svelto.DataStructures
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => (int) _capacity;
         }
+
+        public bool isValid => _ptr != IntPtr.Zero;
 
         public ref T this[uint index]
         {
@@ -85,7 +118,7 @@ namespace Svelto.DataStructures
                 {
 #if DEBUG && !PROFILE_SVELTO
                     if (index < 0 || index >= _capacity)
-                        throw new Exception("NativeBuffer - out of bound access");
+                        throw new Exception($"NativeBuffer - out of bound access: index {index} - capacity {capacity}");
 #endif
                     var size = MemoryUtilities.SizeOf<T>();
                     ref var asRef = ref Unsafe.AsRef<T>((void*) (_ptr + (int) (index * size)));
@@ -95,7 +128,7 @@ namespace Svelto.DataStructures
         }
 
         readonly uint _capacity;
-#if UNITY_COLLECTIONS
+#if UNITY_NATIVE
         //todo can I remove this from here? it should be used outside
         [Unity.Burst.NoAlias]
         [Unity.Collections.LowLevel.Unsafe.NativeDisableUnsafePtrRestriction]

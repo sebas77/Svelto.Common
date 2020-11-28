@@ -25,9 +25,9 @@ namespace Svelto.DataStructures
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void CopyTo(uint sourceStartIndex, T[] destination, uint destinationStartIndex, uint size)
+        public void CopyTo(uint sourceStartIndex, T[] destination, uint destinationStartIndex, uint count)
         {
-            Array.Copy(_buffer, sourceStartIndex, destination, destinationStartIndex, size);
+            Array.Copy(_buffer, sourceStartIndex, destination, destinationStartIndex, count);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

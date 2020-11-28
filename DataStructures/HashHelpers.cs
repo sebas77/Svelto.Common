@@ -60,10 +60,14 @@ namespace Svelto.DataStructures
             if (min < 0)
                 throw new ArgumentException();
 
+            if (min <= 1)
+                return 1;
+
             for (int i = 0; i < primes.Length; i++)
             {
                 int prime = primes[i];
-                if (prime >= min) return prime;
+                if (prime >= min) 
+                    return prime;
             }
 
             //outside of our predefined table. 
@@ -79,7 +83,7 @@ namespace Svelto.DataStructures
         // Returns size of hashtable to grow to.
         public static int ExpandPrime(int oldSize)
         {
-            DBC.Common.Check.Require(oldSize > 0, "can't expand 0");
+            oldSize = GetPrime(oldSize);
             
             int newSize = 2 * oldSize;
 

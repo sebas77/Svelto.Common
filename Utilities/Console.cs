@@ -24,7 +24,10 @@ namespace Svelto
 
         static readonly ILogger _standardLogger = new SimpleLogger();
 
-        static Console() { AddLogger(_standardLogger); }
+        static Console()
+        {
+            AddLogger(_standardLogger);
+        }
 
         public static void SetLogger(ILogger log)
         {
@@ -104,12 +107,12 @@ namespace Svelto
         }
 
         [Conditional("DEBUG")]
-        public static void LogDebug(string txt) { InternalLog(txt, LogType.Log); }
+        public static void LogDebug(string txt) { InternalLog(txt, LogType.LogDebug); }
 
         [Conditional("DEBUG")]
         public static void LogDebug<T>(string txt, T extradebug)
         {
-            InternalLog(txt.FastConcat(extradebug.ToString()), LogType.Log);
+            InternalLog(txt.FastConcat(extradebug.ToString()), LogType.LogDebug);
         }
 
         public static void LogDebugWarning(string txt)

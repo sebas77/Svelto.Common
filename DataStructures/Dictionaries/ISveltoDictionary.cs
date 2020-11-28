@@ -5,7 +5,7 @@ namespace Svelto.DataStructures
 {
     public interface ISveltoDictionary<TKey, TValue>: IDisposable where TKey : IEquatable<TKey>
     {
-        uint            count { get; }
+        int            count { get; }
         void            Add(TKey key, in TValue value);
         void            Set(TKey key, in TValue value);
         void            Clear();

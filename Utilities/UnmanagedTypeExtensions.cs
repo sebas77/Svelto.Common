@@ -10,8 +10,6 @@ namespace Svelto.Common
         static readonly Dictionary<Type, bool> cachedTypes =
             new Dictionary<Type, bool>();
 
-        public static bool IsUnmanagedEx<T>() { return typeof(T).IsUnmanagedEx(); }
-
         public static bool IsUnmanagedEx(this Type t)
         {
             var result = false;

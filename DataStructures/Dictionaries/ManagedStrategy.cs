@@ -14,6 +14,8 @@ namespace Svelto.DataStructures
             Alloc(size, Allocator.None);
         }
 
+        public bool isValid => _buffer != null;
+
         public void Alloc(uint size, Allocator nativeAllocator)
         {
             MB<T> b = new MB<T>();
@@ -22,12 +24,18 @@ namespace Svelto.DataStructures
             _buffer = null;
         }
 
-        public void Resize(uint newCapacity)
+        public void Resize(uint newCapacity, bool copyContent = true)
         {
             DBC.Common.Check.Require(newCapacity > 0, "Resize requires a size greater than 0");
             
             var realBuffer = _realBuffer.ToManagedArray();
-            Array.Resize(ref realBuffer, (int) newCapacity);
+            if (copyContent == true)
+                Array.Resize(ref realBuffer, (int) newCapacity);
+            else
+            {
+                realBuffer = new T[newCapacity];
+            }
+
             MB<T> b = new MB<T>();
             b.Set(realBuffer);
             this._realBuffer = b;
@@ -59,6 +67,13 @@ namespace Svelto.DataStructures
             return _buffer;
         }
 
-        public void Dispose() {  }
+        public Allocator allocationStrategy => Allocator.Managed;
+
+        public void       Dispose() {  }
+
+        public MB<T> ToRealBuffer()
+        {
+            return _realBuffer;
+        }
     }
 }

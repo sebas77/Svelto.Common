@@ -18,7 +18,7 @@ namespace Svelto.DataStructures
             _lockQ = ReaderWriterLockSlimEx.Create();
         }
 
-        public uint Count
+        public int count
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get

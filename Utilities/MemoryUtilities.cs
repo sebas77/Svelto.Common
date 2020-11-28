@@ -1,6 +1,13 @@
 #if DEBUG && !PROFILE_SVELTO
 #define DEBUG_MEMORY
 #endif
+#if UNITY_EDITOR
+#if UNITY_2019_3_OR_NEWER
+#define USE_UNITY_NATIVE
+#else
+#error Svelto.ECS 3.0 supports Unity 2019_3 and above only
+#endif
+#endif
 
 using System;
 using System.Reflection;
@@ -15,7 +22,8 @@ namespace Svelto.Common
         None,
         Temp,
         TempJob,
-        Persistent
+        Persistent,
+        Managed
     }
 #else    
     public enum Allocator
@@ -39,26 +47,21 @@ namespace Svelto.Common
         /// <summary>
         ///   <para>Persistent allocation.</para>
         /// </summary>
-        Persistent = Unity.Collections.Allocator.Persistent
+        Persistent = Unity.Collections.Allocator.Persistent,
+        
+        Managed
     }
 #endif
 
     public static class MemoryUtilities
     {    
-#if UNITY_EDITOR && !UNITY_COLLECTIONS        
-        static MemoryUtilities()
-        {
-            #warning Svelto.Common is depending on the Unity Collection package. Alternatively you can import System.Runtime.CompilerServices.Unsafe.dll
-        }
-#endif
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static IntPtr Alloc(uint newCapacity, Allocator allocator)
+        public static IntPtr Alloc(uint newCapacity, Allocator allocator, bool clear = true)
         {
             unsafe
             {
                 var signedCapacity = (int) SignedCapacity(newCapacity);
-#if UNITY_COLLECTIONS
+#if UNITY_2019_3_OR_NEWER
                 var allocator1 = (Unity.Collections.Allocator) allocator;
                 var newPointer =
                     Unity.Collections.LowLevel.Unsafe.UnsafeUtility.Malloc(signedCapacity, (int) OptimalAlignment.alignment, allocator1);
@@ -66,7 +69,8 @@ namespace Svelto.Common
                 var newPointer = System.Runtime.InteropServices.Marshal.AllocHGlobal(signedCapacity);
 #endif
                 //Note MemClear is actually necessary
-                MemClear((IntPtr) newPointer, (uint) signedCapacity);
+                if (clear)
+                    MemClear((IntPtr) newPointer, (uint) signedCapacity);
           
                 var signedPointer = SignedPointer(newCapacity, (IntPtr) newPointer);
 
@@ -76,7 +80,7 @@ namespace Svelto.Common
             }
         }
 
-        public static IntPtr Realloc(IntPtr realBuffer, uint oldCapacity , uint newCapacity, Allocator allocator)
+        public static IntPtr Realloc(IntPtr realBuffer, uint oldCapacity , uint newCapacity, Allocator allocator, bool copy = true)
         {
             unsafe
             {
@@ -87,30 +91,20 @@ namespace Svelto.Common
                     throw new Exception("new size must be greater than oldsize");
 #endif          
                 //Alloc returns the corret Signed Pointer already
-                IntPtr signedPointer = Alloc(newCapacity, allocator);
+                IntPtr signedPointer = Alloc(newCapacity, allocator, !copy);
 
                 //Copy only the real data
-                Unsafe.CopyBlock((void*) signedPointer, (void*) realBuffer, oldCapacity);
-                
+                if (copy && oldCapacity > 0)
+                {
+                    Unsafe.CopyBlock((void*) signedPointer, (void*) realBuffer, oldCapacity);
+                    var sizeOf = newCapacity - oldCapacity;
+                    var intPtr = (IntPtr) signedPointer + (int) oldCapacity;
+                    MemClear(intPtr, sizeOf);
+                }
+
                 //Free unsigns the pointer itself
                 Free(realBuffer, allocator);
                 return signedPointer;
-#if NOT_USED_BUT_IF_WANT_TO_I_HAVE_TO_CHECK_THE_MEMORY_BOUNDARIES_BEFORE_TO_REALLOC
-                //find the real pointer
-                var realPointer = UnsignPointer(realBuffer);
-                //find the real capacity with extra info
-                var realCapacity = (IntPtr) SignedCapacity(newCapacity);
-                //realloc with the new size
-                var newPointer = System.Runtime.InteropServices.Marshal.ReAllocHGlobal(realPointer, realCapacity);
-                
-                var signedPointer = SignedPointer(newCapacity, newPointer);
-#if DEBUG && !PROFILE_SVELTO
-                //clear from the end of the old buffer to the end of the new buffer
-                MemClear((IntPtr) signedPointer + (int) oldCapacity, newCapacity - oldCapacity);
-#endif                
-                //return the pointer with signature
-                return signedPointer;
-#endif
             }
         }
         
@@ -121,7 +115,7 @@ namespace Svelto.Common
             {
                 ptr = CheckAndReturnPointerToFree(ptr);
 
-#if UNITY_COLLECTIONS
+#if UNITY_2019_3_OR_NEWER
                 Unity.Collections.LowLevel.Unsafe.UnsafeUtility.Free((void*) ptr, (Unity.Collections.Allocator) allocator);
 #else
                 System.Runtime.InteropServices.Marshal.FreeHGlobal((IntPtr) ptr);
@@ -134,14 +128,14 @@ namespace Svelto.Common
         {
             unsafe 
             {
-#if UNITY_COLLECTIONS
+#if UNITY_2019_3_OR_NEWER
                 Unity.Collections.LowLevel.Unsafe.UnsafeUtility.MemClear((void*) destination, sizeOf);
 #else
                Unsafe.InitBlock((void*) destination, 0, sizeOf);
 #endif
             }
         }
-
+#if UNITY_2019_3_OR_NEWER
         static class OptimalAlignment
         {
             internal static readonly uint alignment;
@@ -151,18 +145,25 @@ namespace Svelto.Common
                 alignment = (uint) (Environment.Is64BitProcess ? 16 : 8);
             }
         }
-
+#endif
         static class CachedSize<T> where T : struct
         {
             public static readonly uint cachedSize = (uint) Unsafe.SizeOf<T>();
+            public static readonly uint cachedSizeAligned =  MemoryUtilities.Align4(cachedSize);
         }
         
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         //THIS MUST STAY INT. THE REASON WHY EVERYTHING IS INT AND NOT UINT IS BECAUSE YOU CAN END UP
         //DOING SUBTRACT OPERATION EXPECTING TO BE < 0 AND THEY WON'T BE
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int SizeOf<T>() where T : struct
         {
             return (int) CachedSize<T>.cachedSize;
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int SizeOfAligned<T>() where T : struct
+        {
+            return (int) CachedSize<T>.cachedSizeAligned;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -184,7 +185,7 @@ namespace Svelto.Common
 
         public static int GetFieldOffset(FieldInfo field)
         {
-#if UNITY_COLLECTIONS
+#if UNITY_2019_3_OR_NEWER
             return Unity.Collections.LowLevel.Unsafe.UnsafeUtility.GetFieldOffset(field);
 #else
             int GetFieldOffset(RuntimeFieldHandle h) => 
@@ -223,7 +224,7 @@ namespace Svelto.Common
                 for (int i = 0; i < 64; i += 4)
                     Unsafe.Write( (void*) (pointerToSign+ (int) (capacityWithoutSignature) + i), value); //4 bytes size allocated
 
-                return (IntPtr) ((byte*) pointerToSign);
+                return (IntPtr) (byte*) pointerToSign;
 #else
                 return (IntPtr) pointerToSign;
 #endif
@@ -256,7 +257,7 @@ namespace Svelto.Common
             {
                 var u = Unsafe.Read<uint>((void*) (debugPtr));
                 if (u != 0xDEADBEEF)
-                    throw new Exception();
+                    throw new Exception("Memory Boundaries check failed!!!");
 
                 debugPtr += 4;
             }
@@ -268,9 +269,27 @@ namespace Svelto.Common
             {
                 var u = Unsafe.Read<uint>((void*) (debugPtr + i));
                 if (u != 0xDEADBEEF)
-                    throw new Exception();
+                    throw new Exception("Memory Boundaries check failed!!!");
             }
 #endif
+        }
+
+        public static void Memmove<T>(IntPtr source, uint sourceStartIndex, IntPtr destination, uint destinationStartIndex, uint size)
+            where T : struct
+        {
+            unsafe
+            {
+                Unsafe.CopyBlock((void*) (destination + (int) destinationStartIndex), (void*) (source + (int) sourceStartIndex), size);
+            }
+        }
+        
+        public static void Memcpy<T>(IntPtr source, uint sourceStartIndex, IntPtr destination, uint destinationStartIndex, uint size)
+            where T : struct
+        {
+            unsafe
+            {
+                Buffer.MemoryCopy((void*) (source + (int) sourceStartIndex), (void*) (destination + (int) destinationStartIndex), size, size);
+            }
         }
     }
 }

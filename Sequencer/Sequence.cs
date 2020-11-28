@@ -43,7 +43,7 @@ namespace Svelto.Common
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <typeparam name="En"></typeparam>
-    public class Sequence<T, En> where En : struct, ISequenceOrder where T : class
+    public class Sequence<T, En> where En : struct, ISequenceOrder
     {
         public Sequence(FasterReadOnlyList<T> itemsToSort)
         {

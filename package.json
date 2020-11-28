@@ -3,7 +3,7 @@
   "category": "Svelto",
   "description": "Svelto common utilities and datastructures",
   "dependencies": {
-    "com.unity.collections": "0.1.1-preview"
+    "com.sebaslab.svelto.unsafe": "4.7.1"
   },
   "keywords": [
     "svelto"

@@ -18,13 +18,13 @@ namespace Svelto.Utilities
 #endif
         static void Init()
         {
+            Thread.VolatileWrite(ref MAINTHREADID, Environment.CurrentManagedThreadId);
+            
             StringBuilder ValueFactory() => new StringBuilder();
 
             _stringBuilder = new ThreadLocal<StringBuilder>(ValueFactory);
 
             Console.SetLogger(new SlowUnityLogger());
-
-            MAINTHREADID = Environment.CurrentManagedThreadId;
         }
 
         public void Log(string txt, LogType type = LogType.Log, Exception e = null,
@@ -36,15 +36,44 @@ namespace Svelto.Utilities
 
             string stack;
 
+#if UNITY_EDITOR
+            string frame = $"thread: {Environment.CurrentManagedThreadId}";
+            try
+            {
+                if (MAINTHREADID == Environment.CurrentManagedThreadId)
+                {
+                    frame += $" frame: {Time.frameCount}";
+                }
+            }
+            catch
+            {
+                //there is something wrong with  Environment.CurrentManagedThreadId
+            }
+#else
+                string frame = "";
+#endif
+            
             switch (type)
             {
                 case LogType.Log:
                 {
 #if UNITY_EDITOR
                     stack = ExtractFormattedStackTrace();
-
-                    Debug.Log("<b><color=teal>".FastConcat(txt, "</color></b> ", Environment.NewLine, stack)
-                        .FastConcat(Environment.NewLine, dataString));
+                        
+                    Debug.Log($"{frame} <b><color=teal>".FastConcat(txt, "</color></b> ", Environment.NewLine, stack)
+                                                              .FastConcat(Environment.NewLine, dataString));
+#else
+                    Debug.Log(txt);
+#endif
+                    break;
+                }
+                case LogType.LogDebug:
+                {
+#if UNITY_EDITOR
+                    stack = ExtractFormattedStackTrace();
+                        
+                    Debug.Log($"{frame} <b><color=orange>".FastConcat(txt, "</color></b> ", Environment.NewLine, stack)
+                                                        .FastConcat(Environment.NewLine, dataString));
 #else
                     Debug.Log(txt);
 #endif
@@ -55,8 +84,8 @@ namespace Svelto.Utilities
 #if UNITY_EDITOR
                     stack = ExtractFormattedStackTrace();
 
-                    Debug.LogWarning("<b><color=yellow>".FastConcat(txt, "</color></b> ", Environment.NewLine, stack)
-                        .FastConcat(Environment.NewLine, dataString));
+                    Debug.LogWarning($"{frame} <b><color=yellow>".FastConcat(txt, "</color></b> ", Environment.NewLine, stack)
+                                                                        .FastConcat(Environment.NewLine, dataString));
 #else
                     Debug.LogWarning(txt);
 #endif
@@ -74,8 +103,8 @@ namespace Svelto.Utilities
                         stack = ExtractFormattedStackTrace();
 
 #if UNITY_EDITOR                    
-                    var fastConcat = "<b><color=red>".FastConcat(txt, "</color></b> ", Environment.NewLine, stack)
-                        .FastConcat(Environment.NewLine, dataString);
+                    var fastConcat = $"{frame} <b><color=red>".FastConcat(txt, "</color></b> ", Environment.NewLine, stack)
+                                                                     .FastConcat(Environment.NewLine, dataString);
 
                     if (MAINTHREADID == Environment.CurrentManagedThreadId)
                     {
