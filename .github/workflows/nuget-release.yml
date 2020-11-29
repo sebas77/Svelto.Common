@@ -20,10 +20,10 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: get preparation tools
-      run: git clone https://github.com/Ujinjinjin/upm-preparator.git --branch v1.0.11 --single-branch
+      run: git clone https://github.com/Ujinjinjin/upm-preparator.git --branch v1.0.12 --single-branch
 
     - name: get package version
-      run: python3 upm-preparator/version.py "version.json"
+      run: python3 upm-preparator/version.py --version-file "version.json" --env-file "${GITHUB_ENV}"
 
     - name: build nuget package
       run: dotnet pack /p:Version=${PKG_VERSION} -o .
