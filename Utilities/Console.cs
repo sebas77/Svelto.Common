@@ -1,4 +1,4 @@
-#if !DEBUG || PROFILER
+#if !DEBUG || PROFILE_SVELTO
 #define DISABLE_DEBUG
 #endif
 using System;
@@ -12,145 +12,129 @@ using System.Text;
 using System.Threading;
 using Svelto.DataStructures;
 using Svelto.Utilities;
-using ILogger = Svelto.Utilities.ILogger;
-using LogType = Svelto.Utilities.LogType;
 
 namespace Svelto
 {
     public static class Console
     {
-        static readonly ThreadLocal<StringBuilder> _stringBuilder =
-            new ThreadLocal<StringBuilder>(() => new StringBuilder(256));
+        static readonly ThreadLocal<StringBuilder> _stringBuilder = new ThreadLocal<StringBuilder>
+            (() => new StringBuilder(256));
 
-        static readonly FasterList<ILogger> _loggers;
+        static readonly FasterList<ILogger> _loggers = new FasterList<ILogger>();
 
-        static ILogger _standardLogger;
+        static readonly ILogger _standardLogger = new SimpleLogger();
 
         static Console()
         {
-            _loggers = new FasterList<ILogger>();
-
-            AddLogger(new SimpleLogger());
+            AddLogger(_standardLogger);
         }
 
         public static void SetLogger(ILogger log)
         {
             _loggers[0] = log;
+
             log.OnLoggerAdded();
         }
 
         public static void AddLogger(ILogger log)
         {
             _loggers.Add(log);
+
             log.OnLoggerAdded();
         }
 
-        static void Log(string txt, LogType type, Exception e = null, Dictionary<string, string> extraData = null)
-        {
-            for (int i = 0; i < _loggers.Count; i++)
-            {
-                    _loggers[i].Log(txt, type, e, extraData);
-            }
-        }
-
-        public static void Log(string txt)
-        {
-            Log(txt, LogType.Log);
-        }
+        public static void Log(string txt) { InternalLog(txt, LogType.Log); }
 
         public static void LogError(string txt, Dictionary<string, string> extraData = null)
         {
-            _stringBuilder.Value.Length = 0;
-            _stringBuilder.Value.Append("-!!!!!!-> ");
-            _stringBuilder.Value.Append(txt);
+            string toPrint;
 
-            var toPrint = _stringBuilder.ToString();
+            lock (_stringBuilder)
+            {
+                _stringBuilder.Value.Length = 0;
+                _stringBuilder.Value.Append("-!!!!!!-> ").Append(txt);
 
-            Log(toPrint, LogType.Error, null, extraData);
+                toPrint = _stringBuilder.ToString();
+            }
+
+            InternalLog(toPrint, LogType.Error, null, extraData);
         }
 
-        public static void LogException(Exception e, Dictionary<string, string> extraData = null)
+        public static void LogException(Exception exception, string message = null
+                                      , Dictionary<string, string> extraData = null)
         {
-            LogException(String.Empty, e, extraData);
-        }
+            if (extraData == null)
+                extraData = new Dictionary<string, string>();
 
-        public static void LogException(string message, Exception exception,
-            Dictionary<string, string> extraData = null)
-        {
+            string toPrint = "-!!!!!!-> ";
+
             Exception tracingE = exception;
             while (tracingE.InnerException != null)
             {
                 tracingE = tracingE.InnerException;
 
-                Log(message, LogType.Exception, tracingE);
+                InternalLog("-!!!!!!-> ", LogType.Error, tracingE);
             }
-            
-            Log(message, LogType.Exception, exception, extraData);
+
+            if (message != null)
+            {
+                lock (_stringBuilder)
+                {
+                    _stringBuilder.Value.Length = 0;
+                    _stringBuilder.Value.Append(toPrint).Append(message);
+
+                    toPrint = _stringBuilder.ToString();
+                }
+            }
+
+            //the goal of this is to show the stack from the real error
+            InternalLog(toPrint, LogType.Exception, exception, extraData);
         }
 
         public static void LogWarning(string txt)
         {
-            _stringBuilder.Value.Length = 0;
-            _stringBuilder.Value.Append("------> ");
-            _stringBuilder.Value.Append(txt);
+            string toPrint;
 
-            var toPrint = _stringBuilder.ToString();
+            lock (_stringBuilder)
+            {
+                _stringBuilder.Value.Length = 0;
+                _stringBuilder.Value.Append("------> ").Append(txt);
 
-            Log(toPrint, LogType.Warning);
+                toPrint = _stringBuilder.ToString();
+            }
+
+            InternalLog(toPrint, LogType.Warning);
         }
 
-#if DISABLE_DEBUG
-        [Conditional("__NEVER_DEFINED__")]
-#endif
-        public static void LogDebug(string txt)
-        {
-            Log("<i><color=teal> ".FastConcat(txt, "</color></i>"), LogType.Log);
-        }
+        [Conditional("DEBUG")]
+        public static void LogDebug(string txt) { InternalLog(txt, LogType.LogDebug); }
 
-#if DISABLE_DEBUG
-        [Conditional("__NEVER_DEFINED__")]
-#endif
+        [Conditional("DEBUG")]
         public static void LogDebug<T>(string txt, T extradebug)
         {
-            Log("<i><color=teal> ".FastConcat(txt, " - ", extradebug.ToString(), "</color></i>"), LogType.Log);
+            InternalLog(txt.FastConcat(extradebug.ToString()), LogType.LogDebug);
+        }
+
+        public static void LogDebugWarning(string txt)
+        {
+            InternalLog(txt, LogType.Warning); 
         }
 
         /// <summary>
-        /// Use this function if you don't want the message to be batched
+        /// this class methods can use only InternalLog to log and cannot use the public methods, otherwise the
+        /// stack depth will break 
         /// </summary>
         /// <param name="txt"></param>
-        public static void SystemLog(string txt)
+        /// <param name="type"></param>
+        /// <param name="e"></param>
+        /// <param name="extraData"></param>
+        static void InternalLog(string txt, LogType type, Exception e = null
+                              , Dictionary<string, string> extraData = null)
         {
-            string toPrint;
-
-#if NETFX_CORE
-                string currentTimeString = DateTime.UtcNow.ToString("dd/mm/yy hh:ii:ss");
-                string processTimeString = (DateTime.UtcNow - ProcessDiagnosticInfo.
-                                                GetForCurrentProcess().ProcessStartTime.DateTime.ToUniversalTime()).ToString();
-#else
-            string currentTimeString = DateTime.UtcNow.ToLongTimeString(); //ensure includes seconds
-            string processTimeString =
-                (DateTime.UtcNow - Process.GetCurrentProcess().StartTime.ToUniversalTime()).ToString();
-#endif
-
-            _stringBuilder.Value.Length = 0;
-            _stringBuilder.Value.Append("[").Append(currentTimeString);
-            _stringBuilder.Value.Append("][").Append(processTimeString);
-            _stringBuilder.Value.Length =
-                _stringBuilder.Value.Length - 3; //remove some precision that we don't need
-            _stringBuilder.Value.Append("] ").AppendLine(txt);
-
-            toPrint = _stringBuilder.ToString();
-
-#if !UNITY_EDITOR
-#if !NETFX_CORE
-            System.Console.WriteLine(toPrint);
-#else
-            //find a way to adopt a logger externally, if this is still needed
-#endif
-#else
-            UnityEngine.Debug.Log(toPrint);
-#endif
+            for (int i = 0; i < _loggers.count; i++)
+            {
+                _loggers[i].Log(txt, type, e, extraData);
+            }
         }
     }
 }

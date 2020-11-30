@@ -7,7 +7,8 @@ namespace Svelto.Utilities
         Log,
         Exception,
         Warning,
-        Error
+        Error,
+        LogDebug
     }
     public interface ILogger
     {

@@ -1,4 +1,4 @@
-#if DEBUG
+#if DEBUG && !PROFILE_SVELTO
 using System;
 using System.Collections.Generic;
 

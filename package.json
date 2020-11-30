@@ -2,13 +2,14 @@
   "displayName": "Svelto Common",
   "category": "Svelto",
   "description": "Svelto common utilities and datastructures",
+  "dependencies": {
+    "com.sebaslab.svelto.unsafe": "4.7.1"
+  },
   "keywords": [
     "svelto"
   ],
-  "dependencies": {
-    "com.unity.collections": "0.1.1-preview"
-  },
   "name": "com.sebaslab.svelto.common",
-  "version": "2.9.12",
+  "unity": "2019.2",
+  "version": "3.0.0",
   "type": "library"
 }
