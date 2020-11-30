@@ -12,5 +12,7 @@ namespace Svelto.ObjectPool
 
         T Use(string poolName, Func<T> onFirstUse = null);
         T Use(int    pool,     Func<T> onFirstUse = null);
+
+        void Clear();
     }
 }

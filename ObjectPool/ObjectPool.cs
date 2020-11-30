@@ -4,12 +4,12 @@ using System.Collections.Generic;
 namespace Svelto.ObjectPool
 {
     public class ObjectPool<T> : IObjectPool<T>, IDisposable
-#if DEBUG
+#if DEBUG && !PROFILE_SVELTO
                                , IObjectPoolDebug
 #endif
         where T : class
     {
-#if DEBUG
+#if DEBUG && !PROFILE_SVELTO
         readonly HashSet<T> alreadyRecycled = new HashSet<T>();
 #endif
 
@@ -17,12 +17,25 @@ namespace Svelto.ObjectPool
         {
             _pools.Clear();
             _namedPools.Clear();
-#if DEBUG
+#if DEBUG && !PROFILE_SVELTO
             alreadyRecycled.Clear();
 #endif
         }
+
+        public virtual void OnDispose()
+        { }
         
-        public virtual void Dispose()
+        public void Dispose()
+        {
+            OnDispose();
+
+            _pools.Clear();
+            _namedPools.Clear();
+
+            _disposed = true;
+        }
+        
+        public void Clear()
         {
             _pools.Clear();
             _namedPools.Clear();
@@ -105,9 +118,10 @@ namespace Svelto.ObjectPool
             return ret;
         }
 
-        protected void InternalRecycle(T obj, int pool)
+        private void InternalRecycle(T obj, int pool)
         {
-#if DEBUG
+            if (_disposed) return;
+#if DEBUG && !PROFILE_SVELTO
             if (alreadyRecycled.Add(obj) == false)
                 throw new Exception("An object already Recycled in the pool has been Recycled again");
 #endif
@@ -119,9 +133,10 @@ namespace Svelto.ObjectPool
             _objectsRecyled++;
         }
 
-        protected void InternalRecycle(T obj, string poolName)
+        private void InternalRecycle(T obj, string poolName)
         {
-#if DEBUG
+            if (_disposed) return;
+#if DEBUG && !PROFILE_SVELTO
             if (alreadyRecycled.Add(obj) == false)
                 throw new Exception("An object already Recycled in the pool has been Recycled again");
 #endif
@@ -186,7 +201,7 @@ namespace Svelto.ObjectPool
             }
             else
             {
-#if DEBUG
+#if DEBUG && !PROFILE_SVELTO
                 alreadyRecycled.Remove(obj);
 #endif
                 _objectsReused++;
@@ -206,8 +221,9 @@ namespace Svelto.ObjectPool
         int _objectsReused;
         int _objectsCreated;
         int _objectsRecyled;
+        bool _disposed;
 
-#if DEBUG
+#if DEBUG && !PROFILE_SVELTO
         public List<ObjectPoolDebugStructureInt> DebugPoolInfo(List<ObjectPoolDebugStructureInt> debugInfo)
         {
             debugInfo.Clear();

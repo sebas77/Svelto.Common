@@ -1,13 +1,10 @@
-using System;
-using System.Collections.Generic;
-
 namespace Svelto.Common.Internal
 {
     public static class DebugExtensions
     {
         public static string TypeName<T>(this T any)
         {
-#if DEBUG            
+#if DEBUG && !PROFILE_SVELTO          
             var type = any.GetType();
             if (_names.TryGetValue(type, out var name) == false)
             {
@@ -20,8 +17,8 @@ namespace Svelto.Common.Internal
             return "";
 #endif
         }
-#if DEBUG            
-        static readonly Dictionary<Type, string> _names = new Dictionary<Type, string>();
+#if DEBUG && !PROFILE_SVELTO          
+        static readonly System.Collections.Generic.Dictionary<System.Type, string> _names = new System.Collections.Generic.Dictionary<System.Type, string>();
 #endif
     }
 }

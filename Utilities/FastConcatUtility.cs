@@ -26,7 +26,7 @@ public static class FastConcatUtility
             return _stringBuilder.Value.ToString();
         }
     }
-    
+
     public static string FastConcat(this string str1, uint value)
     {
         {
@@ -37,7 +37,7 @@ public static class FastConcatUtility
             return _stringBuilder.Value.ToString();
         }
     }
-    
+
     public static string FastConcat(this string str1, long value)
     {
         {
@@ -47,8 +47,8 @@ public static class FastConcatUtility
 
             return _stringBuilder.Value.ToString();
         }
-    }    
-    
+    }
+
     public static string FastConcat(this string str1, float value)
     {
         {
@@ -59,7 +59,7 @@ public static class FastConcatUtility
             return _stringBuilder.Value.ToString();
         }
     }
-    
+
     public static string FastConcat(this string str1, double value)
     {
         {

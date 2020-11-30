@@ -13,7 +13,6 @@
 ===========================================================*/
 
 using System;
-using System.Diagnostics;
 
 namespace Svelto.DataStructures
 {
@@ -61,10 +60,14 @@ namespace Svelto.DataStructures
             if (min < 0)
                 throw new ArgumentException();
 
+            if (min <= 1)
+                return 1;
+
             for (int i = 0; i < primes.Length; i++)
             {
                 int prime = primes[i];
-                if (prime >= min) return prime;
+                if (prime >= min) 
+                    return prime;
             }
 
             //outside of our predefined table. 
@@ -80,6 +83,8 @@ namespace Svelto.DataStructures
         // Returns size of hashtable to grow to.
         public static int ExpandPrime(int oldSize)
         {
+            oldSize = GetPrime(oldSize);
+            
             int newSize = 2 * oldSize;
 
             // Allow the hashtables to grow to maximum possible size (~2G elements) before encoutering capacity overflow.

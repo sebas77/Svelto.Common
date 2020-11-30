@@ -11,20 +11,19 @@ namespace Svelto.Utilities
 {
     public class SlowUnityLogger : ILogger
     {
-        public SlowUnityLogger()
-        {
-            StringBuilder ValueFactory() => new StringBuilder();
-
-            _stringBuilder = new ThreadLocal<StringBuilder>(ValueFactory);
-        }
-        
-#if UNITY_2019_3_OR_NEWER
+#if UNITY_2018_3_OR_NEWER
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
 #else
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
 #endif
         static void Init()
         {
+            Thread.VolatileWrite(ref MAINTHREADID, Environment.CurrentManagedThreadId);
+            
+            StringBuilder ValueFactory() => new StringBuilder();
+
+            _stringBuilder = new ThreadLocal<StringBuilder>(ValueFactory);
+
             Console.SetLogger(new SlowUnityLogger());
         }
 
@@ -37,15 +36,44 @@ namespace Svelto.Utilities
 
             string stack;
 
+#if UNITY_EDITOR
+            string frame = $"thread: {Environment.CurrentManagedThreadId}";
+            try
+            {
+                if (MAINTHREADID == Environment.CurrentManagedThreadId)
+                {
+                    frame += $" frame: {Time.frameCount}";
+                }
+            }
+            catch
+            {
+                //there is something wrong with  Environment.CurrentManagedThreadId
+            }
+#else
+                string frame = "";
+#endif
+            
             switch (type)
             {
                 case LogType.Log:
                 {
-#if !(!UNITY_EDITOR || PROFILER)
+#if UNITY_EDITOR
                     stack = ExtractFormattedStackTrace();
-
-                    Debug.Log("<b><color=teal>".FastConcat(txt, "</color></b> ", Environment.NewLine, stack)
-                        .FastConcat(Environment.NewLine, dataString));
+                        
+                    Debug.Log($"{frame} <b><color=teal>".FastConcat(txt, "</color></b> ", Environment.NewLine, stack)
+                                                              .FastConcat(Environment.NewLine, dataString));
+#else
+                    Debug.Log(txt);
+#endif
+                    break;
+                }
+                case LogType.LogDebug:
+                {
+#if UNITY_EDITOR
+                    stack = ExtractFormattedStackTrace();
+                        
+                    Debug.Log($"{frame} <b><color=orange>".FastConcat(txt, "</color></b> ", Environment.NewLine, stack)
+                                                        .FastConcat(Environment.NewLine, dataString));
 #else
                     Debug.Log(txt);
 #endif
@@ -53,11 +81,11 @@ namespace Svelto.Utilities
                 }
                 case LogType.Warning:
                 {
-#if !(!UNITY_EDITOR || PROFILER)
+#if UNITY_EDITOR
                     stack = ExtractFormattedStackTrace();
 
-                    Debug.LogWarning("<b><color=teal>".FastConcat(txt, "</color></b> ", Environment.NewLine, stack)
-                        .FastConcat(Environment.NewLine, dataString));
+                    Debug.LogWarning($"{frame} <b><color=yellow>".FastConcat(txt, "</color></b> ", Environment.NewLine, stack)
+                                                                        .FastConcat(Environment.NewLine, dataString));
 #else
                     Debug.LogWarning(txt);
 #endif
@@ -74,8 +102,26 @@ namespace Svelto.Utilities
                     else
                         stack = ExtractFormattedStackTrace();
 
-                    Debug.LogError("<b><color=red>".FastConcat(txt, "</color></b> ", Environment.NewLine, stack)
-                        .FastConcat(Environment.NewLine, dataString));
+#if UNITY_EDITOR                    
+                    var fastConcat = $"{frame} <b><color=red>".FastConcat(txt, "</color></b> ", Environment.NewLine, stack)
+                                                                     .FastConcat(Environment.NewLine, dataString);
+
+                    if (MAINTHREADID == Environment.CurrentManagedThreadId)
+                    {
+                        var error = Application.GetStackTraceLogType(UnityEngine.LogType.Error);
+                        Application.SetStackTraceLogType(UnityEngine.LogType.Error, StackTraceLogType.None);
+                        Debug.LogError(fastConcat);
+                        Application.SetStackTraceLogType(UnityEngine.LogType.Error, error);
+                    }
+                    else
+                        Debug.LogError(txt);
+#else
+                    if (type == LogType.Error)
+                        Debug.LogError(txt);
+                    else
+                    if (e != null)
+                        Debug.LogException(e);
+#endif
                     break;
                 }
             }
@@ -85,10 +131,8 @@ namespace Svelto.Utilities
         {
             projectFolder = Application.dataPath.Replace("Assets", "");
 
-#if !UNITY_EDITOR || PROFILER
             Application.SetStackTraceLogType(UnityEngine.LogType.Warning, StackTraceLogType.None);
             Application.SetStackTraceLogType(UnityEngine.LogType.Log, StackTraceLogType.None);
-#endif
 
             Console.Log("Slow Unity Logger added");
         }
@@ -102,7 +146,7 @@ namespace Svelto.Utilities
         {
             _stringBuilder.Value.Length = 0;
 
-            var frame = new StackTrace(3, true);
+            var frame = new StackTrace(4, true);
 
             for (var index1 = 0; index1 < stackTrace.FrameCount; ++index1)
             {
@@ -121,7 +165,7 @@ namespace Svelto.Utilities
         {
             _stringBuilder.Value.Length = 0;
 
-            var frame = new StackTrace(3, true);
+            var frame = new StackTrace(4, true);
 
             for (var index1 = 0; index1 < frame.FrameCount; ++index1)
             {
@@ -195,9 +239,10 @@ namespace Svelto.Utilities
             }
         }
 
-        readonly ThreadLocal<StringBuilder> _stringBuilder;
+        static ThreadLocal<StringBuilder> _stringBuilder;
 
         static string projectFolder;
+        static int MAINTHREADID;
     }
 }
 #endif

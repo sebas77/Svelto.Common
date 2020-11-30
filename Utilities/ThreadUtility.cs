@@ -7,33 +7,26 @@ namespace Svelto.Utilities
 {
     public static class ThreadUtility
     {
-        public static void MemoryBarrier()
-        {
-#if NET_4_6 || NET_STANDARD_2_0 || NETSTANDARD2_0
-            Interlocked.MemoryBarrier();
-#else
-            Thread.MemoryBarrier();
-#endif
-        }
-
+        /// <summary>
+        /// The main difference between Yield and Sleep(0) is that Yield doesn't allow a switch of context
+        /// that is the core is given to a thread that is already running on that core. Sleep(0) may cause
+        /// a context switch
+        /// to another thread.  
+        /// </summary>
         public static void Yield()
         {
 #if NETFX_CORE && !NET_STANDARD_2_0 && !NETSTANDARD2_0
-            throw new Exception("Svelto doesn't support UWP without NET_STANDARD_2_0 support");
-#elif NET_4_6 || NET_STANDARD_2_0 || NETSTANDARD2_0
-            Thread.Yield(); 
-#else
-            Thread.Sleep(0); 
+            #error Svelto doesn't support UWP without NET_STANDARD_2_0 support
 #endif
+            Thread.Yield(); 
         }
 
         public static void TakeItEasy()
         {
 #if NETFX_CORE && !NET_STANDARD_2_0 && !NETSTANDARD2_0
-            throw new Exception("Svelto doesn't support UWP without NET_STANDARD_2_0 support");
-#else
-            Thread.Sleep(1); 
+            #error Svelto doesn't support UWP without NET_STANDARD_2_0 support
 #endif
+            Thread.Sleep(1); 
         }
 
         /// <summary>
@@ -46,163 +39,5 @@ namespace Svelto.Utilities
             if ((quickIterations++ & (frequency - 1)) == 0)
                 Yield();
         }
-        
-
-        public static bool VolatileRead(ref bool val)
-        {
-#if NET_4_6 || NET_STANDARD_2_0 || NETSTANDARD2_0
-            return Volatile.Read(ref val);
-#else
-            Thread.MemoryBarrier();
-
-            return val;
-#endif
-        }
-        
-        public static long VolatileRead(ref long val)
-        {
-#if NET_4_6 || NET_STANDARD_2_0 || NETSTANDARD2_0
-            return Volatile.Read(ref val);
-#else
-            Thread.MemoryBarrier();
-
-            return val;
-#endif
-        }
-        
-        public static byte VolatileRead(ref byte val)
-        {
-#if NET_4_6 || NET_STANDARD_2_0 || NETSTANDARD2_0
-            return Volatile.Read(ref val);
-#else
-            Thread.MemoryBarrier();
-
-            return val;
-#endif
-        }
-        
-        public static int VolatileRead(ref int val)
-        {
-#if NET_4_6 || NET_STANDARD_2_0 || NETSTANDARD2_0
-            return Volatile.Read(ref val);
-#else
-            Thread.MemoryBarrier();
-
-            return val;
-#endif
-        }
-        
-        public static float VolatileRead(ref float val)
-        {
-#if NET_4_6 || NET_STANDARD_2_0 || NETSTANDARD2_0
-            return Volatile.Read(ref val);
-#else
-            Thread.MemoryBarrier();
-
-            return val;
-#endif
-        }
-
-        public static void VolatileWrite(ref bool var, bool val)
-        {
-#if NET_4_6 || NET_STANDARD_2_0 || NETSTANDARD2_0
-            Volatile.Write(ref var, val);
-#else
-            var = val;
-            Thread.MemoryBarrier();
-#endif
-        }
-        
-        public static void VolatileWrite(ref long var, long val)
-        {
-#if NET_4_6 || NET_STANDARD_2_0 || NETSTANDARD2_0
-            Volatile.Write(ref var, val);
-#else
-            var = val;
-            Thread.MemoryBarrier();
-#endif
-        }
-        
-        public static void VolatileWrite(ref byte var, byte val)
-        {
-#if NET_4_6 || NET_STANDARD_2_0 || NETSTANDARD2_0
-            Volatile.Write(ref var, val);
-#else
-            var = val;
-            Thread.MemoryBarrier();
-#endif
-        }
-
-        public static void VolatileWrite(ref float var, float val)
-        {
-#if NET_4_6 || NET_STANDARD_2_0 || NETSTANDARD2_0
-            Volatile.Write(ref var, val);
-#else
-            var = val;
-            Thread.MemoryBarrier();
-#endif
-        }
     }
-
-#if NET_4_6 || NET_STANDARD_2_0 || NETSTANDARD2_0
-    public sealed class ManualResetEventEx
-    {
-        readonly ManualResetEventSlim _manualReset = new ManualResetEventSlim(false);
-        
-        public void Wait()
-        {
-            _manualReset.Wait();
-        }
-
-        public void Wait(int ms)
-        {
-            _manualReset.Wait(ms);
-        }
-
-        public void Reset()
-        {
-            _manualReset.Reset();
-        }
-
-        public void Set()
-        {
-            _manualReset.Set();
-        }
-
-        public void Dispose()
-        {
-            _manualReset.Dispose();
-        }
-    }
-#else
-    public class ManualResetEventEx
-    {
-        readonly ManualResetEvent _manualReset = new ManualResetEvent(false);
-        
-        public void Wait()
-        {
-            _manualReset.WaitOne();
-        }
-
-        public void Wait(int ms)
-        {
-            _manualReset.WaitOne(ms);
-        }
-
-        public void Reset()
-        {
-            _manualReset.Reset();
-        }
-
-        public void Set()
-        {
-            _manualReset.Set();
-        }
-
-        public void Dispose()
-        {
-            _manualReset.Close();
-        }
-    }
-#endif
 }
