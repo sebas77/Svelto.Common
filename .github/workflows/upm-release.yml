@@ -1,4 +1,4 @@
-name: Svelto.Common UPM Release
+name: Svelto.Common UPM Release 
 
 on:
   push:
