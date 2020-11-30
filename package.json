@@ -3,13 +3,13 @@
   "category": "Svelto",
   "description": "Svelto common utilities and datastructures",
   "dependencies": {
-    "com.sebaslab.svelto.unsafe": "4.7.1-upload.2"
+    "com.sebaslab.svelto.unsafe": "4.7.1-upload.3"
   },
   "keywords": [
     "svelto"
   ],
   "name": "com.sebaslab.svelto.common",
   "unity": "2019.2",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "type": "library"
 }
