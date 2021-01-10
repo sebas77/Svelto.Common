@@ -54,6 +54,7 @@ namespace Svelto.DataStructures
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _buffer.Length;
         }
+        public bool isValid => _buffer != null;
         
         public ref T this[uint index]
         {
