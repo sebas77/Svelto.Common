@@ -1,8 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using DBC.Common;
 using Svelto.Common;
+using Svelto.Utilities;
 
 namespace Svelto.DataStructures
 {
@@ -21,7 +20,7 @@ namespace Svelto.DataStructures
     public struct
         SveltoDictionary<TKey, TValue, TKeyStrategy, TValueStrategy, TBucketStrategy> : ISveltoDictionary<TKey, TValue>
         where TKey : struct, IEquatable<TKey>
-        where TKeyStrategy : struct, IBufferStrategy<FasterDictionaryNode<TKey>>
+        where TKeyStrategy : struct, IBufferStrategy<SveltoDictionaryNode<TKey>>
         where TValueStrategy : struct, IBufferStrategy<TValue>
         where TBucketStrategy : struct, IBufferStrategy<int>
     {
@@ -116,7 +115,7 @@ namespace Svelto.DataStructures
         {
             if (TryFindIndex(key, out var findIndex) == true)
             {
-                result = _values[(int) findIndex];
+                result = _values[findIndex];
                 return true;
             }
 
@@ -130,12 +129,12 @@ namespace Svelto.DataStructures
         {
             if (TryFindIndex(key, out var findIndex) == true)
             {
-                return ref _values[(int) findIndex];
+                return ref _values[findIndex];
             }
 
             AddValue(key, default, out findIndex);
 
-            return ref _values[(int) findIndex];
+            return ref _values[findIndex];
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -143,12 +142,26 @@ namespace Svelto.DataStructures
         {
             if (TryFindIndex(key, out var findIndex) == true)
             {
-                return ref _values[(int) findIndex];
+                return ref _values[findIndex];
             }
 
             AddValue(key, builder(), out findIndex);
 
-            return ref _values[(int) findIndex];
+            return ref _values[findIndex];
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref TValue GetOrCreate<W>(TKey key, FuncRef<W, TValue> builder, ref W parameter)
+        {
+            if (TryFindIndex(key, out var findIndex) == true)
+            {
+                return ref _values[findIndex];
+            }
+
+            AddValue(key, builder(ref parameter), out findIndex);
+
+            return ref _values[findIndex];
+
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -162,14 +175,14 @@ namespace Svelto.DataStructures
         {
 #if DEBUG && !PROFILE_SVELTO
             if (TryFindIndex(key, out var findIndex) == true)
-                return ref _values[(int) findIndex];
+                return ref _values[findIndex];
 
             throw new SveltoDictionaryException("Key not found");
 #else
             //Burst is not able to vectorise code if throw is found, regardless if it's actually ever thrown
             TryFindIndex(key, out var findIndex);
 
-            return ref _values[(int) findIndex];
+            return ref _values[findIndex];
 #endif
         }
 
@@ -202,7 +215,7 @@ namespace Svelto.DataStructures
             {
                 ResizeIfNeeded();
                 //create the info node at the last position and fill it with the relevant information
-                _valuesInfo[_freeValueCellIndex] = new FasterDictionaryNode<TKey>(ref key, hash);
+                _valuesInfo[_freeValueCellIndex] = new SveltoDictionaryNode<TKey>(ref key, hash);
             }
             else //collision or already exists
             {
@@ -228,7 +241,7 @@ namespace Svelto.DataStructures
                 //oops collision!
                 _collisions++;
                 //create a new node which previous index points to node currently pointed in the bucket
-                _valuesInfo[_freeValueCellIndex] = new FasterDictionaryNode<TKey>(ref key, hash, valueIndex);
+                _valuesInfo[_freeValueCellIndex] = new SveltoDictionaryNode<TKey>(ref key, hash, valueIndex);
                 //update the next of the existing cell to point to the new one
                 //old one -> new one | old one <- next one
                 _valuesInfo[valueIndex].next = (int) _freeValueCellIndex;
@@ -471,7 +484,7 @@ namespace Svelto.DataStructures
                 valuesInfo[previous].next = next;
         }
 
-        public ref struct SveltoDictionaryKeyValueEnumerator
+        public struct SveltoDictionaryKeyValueEnumerator
         {
             public SveltoDictionaryKeyValueEnumerator
                 (SveltoDictionary<TKey, TValue, TKeyStrategy, TValueStrategy, TBucketStrategy> dic) : this()
@@ -519,7 +532,7 @@ namespace Svelto.DataStructures
             public SveltoDictionaryKeyEnumerator GetEnumerator() => new SveltoDictionaryKeyEnumerator(_dic);
         }
 
-        public ref struct SveltoDictionaryKeyEnumerator
+        public struct SveltoDictionaryKeyEnumerator
         {
             public SveltoDictionaryKeyEnumerator
                 (SveltoDictionary<TKey, TValue, TKeyStrategy, TValueStrategy, TBucketStrategy> dic) : this()
@@ -556,7 +569,7 @@ namespace Svelto.DataStructures
         /// <summary>
         ///the mechanism to use arrays is fundamental to work 
         /// </summary>
-        public readonly ref struct KeyValuePairFast
+        public readonly struct KeyValuePairFast
         {
             readonly TValueStrategy _dicValues;
             readonly TKey           _key;
@@ -582,12 +595,12 @@ namespace Svelto.DataStructures
             _buckets.Dispose();
         }
 
-        TKeyStrategy    _valuesInfo;
-        TBucketStrategy _buckets;
+        internal TKeyStrategy _valuesInfo;
+        TBucketStrategy       _buckets;
 
-        uint                                   _freeValueCellIndex;
-        uint                                   _collisions;
-        internal TValueStrategy                _values;
+        uint                      _freeValueCellIndex;
+        uint                      _collisions;
+        internal   TValueStrategy _values;
     }
 
     public class SveltoDictionaryException : Exception
