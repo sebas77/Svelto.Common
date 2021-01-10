@@ -13,7 +13,6 @@ All notable changes to this project will be documented in this file. I created t
 * renamed FasterDictionaryNode to SveltoDictionaryNode
 * removed string based pools fro the ObjectPool
 * added a very simple implementation of a sparseset
-* 
 
 ### Fixed
 
