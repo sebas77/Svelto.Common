@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file. I created this file with Svelto.Common version 3.1.
 
-## [0.3.1]
+## [3.1.0]
 
 ### Changed
 

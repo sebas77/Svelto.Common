@@ -49,8 +49,6 @@ namespace Svelto.Utilities
             {
                 //there is something wrong with  Environment.CurrentManagedThreadId
             }
-#else
-                string frame = "";
 #endif
             
             switch (type)
