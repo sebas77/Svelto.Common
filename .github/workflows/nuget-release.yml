@@ -1,12 +1,16 @@
 name: Svelto.Common Nuget Release
 
 on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Reason'
+        default: 'Manual workflow triggering'
   push:
     branches:
       - master
     paths:
       - version.json
-      - ".github/workflows/nuget-release.yml"
 
 jobs:
   build:
