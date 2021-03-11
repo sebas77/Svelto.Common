@@ -9,6 +9,9 @@
     <PropertyGroup>
         <PackageId>Svelto.Common</PackageId>
         <Authors>sebas77</Authors>
+        <RepositoryUrl>https://github.com/sebas77/Svelto.Common</RepositoryUrl>
+        <NuspecFile Condition="'$(Configuration)'=='Custom'">Svelto.Common.nuspec</NuspecFile>
+        <NuspecProperties Condition="'$(Configuration)'=='Custom'">version=$(PackageVersion)</NuspecProperties>
     </PropertyGroup>
     
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -16,6 +19,10 @@
         <UseSharedCompilation>false</UseSharedCompilation>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <UseSharedCompilation>false</UseSharedCompilation>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)' == 'Custom' ">
         <PlatformTarget>AnyCPU</PlatformTarget>
         <UseSharedCompilation>false</UseSharedCompilation>
     </PropertyGroup>
