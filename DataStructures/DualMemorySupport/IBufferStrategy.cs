@@ -1,13 +1,17 @@
+using System;
 using Svelto.Common;
 
 namespace Svelto.DataStructures
 {
     public interface IBufferStrategy<T>
     {
-        int  capacity { get; }
-        bool isValid  { get; }
+        int       capacity           { get; }
+        bool      isValid            { get; }
+        Allocator allocationStrategy { get; }
 
-        void Alloc(uint size, Allocator nativeAllocator);
+        void Alloc(uint size, Allocator allocator, bool clear = true);
+        void ShiftRight(uint index, uint count);
+        void ShiftLeft(uint index, uint count);
         void Resize(uint newCapacity, bool copyContent = true);
         void Clear();
         
@@ -15,8 +19,7 @@ namespace Svelto.DataStructures
         ref T this[int index] { get ; }
         
         IBuffer<T> ToBuffer();
-        
-        Allocator allocationStrategy { get; }
+
         void Dispose();
     }
 }

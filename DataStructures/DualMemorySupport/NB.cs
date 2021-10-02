@@ -7,37 +7,38 @@ namespace Svelto.DataStructures
 {
     sealed class NBDebugProxy<T> where T : struct
     {
-        NB<T> m_Array;
-
         public NBDebugProxy(NB<T> array)
         {
-            this.m_Array = array;
+            this._array = array;
         }
 
         public T[] Items
         {
             get
             {
-                T[] array = new T[m_Array.capacity];
+                T[] array = new T[_array.capacity];
                 
-                m_Array.CopyTo(0, array, 0, (uint) m_Array.capacity);
+                _array.CopyTo(0, array, 0, (uint) _array.capacity);
 
                 return array;
             }
         }
+        
+        NB<T> _array;
     }
 
-/// <summary>
-    /// NB stands for NB
-    /// NativeBuffers are current designed to be used inside Jobs. They wrap an EntityDB array of components
+    /// <summary>
+    /// NB stands for NativeBuffer
+    /// 
+    /// NativeBuffers were initially mainly designed to be used inside Unity Jobs. They wrap an EntityDB array of components
     /// but do not track it. Hence it's meant to be used temporary and locally as the array can become invalid
-    /// after a submission of entities.
+    /// after a submission of entities. However they cannot be used as ref struct
     ///
-    /// NB are wrappers of native arrays. Are not meant to resize or free
+    /// ------> NBs are wrappers of native arrays. Are not meant to resize or be freed
     ///
     /// NBs cannot have a count, because a count of the meaningful number of items is not tracked.
-    /// Example: an MB could be initialized with a size 10 and count 0. Then the buffer is used to fill entities
-    /// but the count will stay zero. It's not the MB responsibility to track the count
+    /// Example: an NB could be initialized with a size 10 and count 0. Then the buffer is used to fill entities
+    /// but the count will stay zero. It's not the NB responsibility to track the count
     /// 
     /// </summary>
     /// <typeparam name="T"></typeparam>
@@ -47,7 +48,7 @@ namespace Svelto.DataStructures
     {
         static NB()
         {
-            if (TypeCache<T>.IsUnmanaged == false)
+            if (TypeCache<T>.isUnmanaged == false)
                 throw new Exception("NativeBuffer (NB) supports only unmanaged types");
         }
         
@@ -66,11 +67,8 @@ namespace Svelto.DataStructures
         }
         public void Clear()
         {
-            MemoryUtilities.MemClear(_ptr, (uint) (_capacity * MemoryUtilities.SizeOf<T>()));
+            MemoryUtilities.MemClear<T>(_ptr, _capacity);
         }
-
-        public void FastClear()
-        { }
 
         public T[] ToManagedArray()
         {
@@ -128,7 +126,7 @@ namespace Svelto.DataStructures
         }
 
         readonly uint _capacity;
-#if UNITY_NATIVE
+#if UNITY_COLLECTIONS
         //todo can I remove this from here? it should be used outside
         [Unity.Burst.NoAlias]
         [Unity.Collections.LowLevel.Unsafe.NativeDisableUnsafePtrRestriction]
