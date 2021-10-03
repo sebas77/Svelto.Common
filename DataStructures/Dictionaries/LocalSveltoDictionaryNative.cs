@@ -1,19 +1,28 @@
 using System;
 using System.Runtime.CompilerServices;
-using Svelto.Common;
 
 namespace Svelto.DataStructures
 {
-    public struct SveltoDictionaryNative<TKey, TValue>
+    public ref struct LocalSveltoDictionaryNative<TKey, TValue>
         where TKey : unmanaged, IEquatable<TKey> where TValue : struct
     {
-        public SveltoDictionaryNative(uint size) : this(size, Allocator.Persistent) { }
-
-        public SveltoDictionaryNative(uint size, Allocator nativeAllocator)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator LocalSveltoDictionaryNative<TKey, TValue>
+        (SveltoDictionary<TKey, TValue, NativeStrategy<SveltoDictionaryNode<TKey>>, NativeStrategy<TValue>,
+             NativeStrategy<int>> dic)
         {
-            _dictionary =
-                new SveltoDictionary<TKey, TValue, NativeStrategy<SveltoDictionaryNode<TKey>>, NativeStrategy<TValue>,
-                    NativeStrategy<int>>(size, nativeAllocator);
+            return new LocalSveltoDictionaryNative<TKey, TValue>()
+            {
+                _dictionary = dic
+            };
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator
+            SveltoDictionary<TKey, TValue, NativeStrategy<SveltoDictionaryNode<TKey>>, NativeStrategy<TValue>,
+                NativeStrategy<int>>(LocalSveltoDictionaryNative<TKey, TValue> dic)
+        {
+            return dic._dictionary;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -87,17 +96,6 @@ namespace Svelto.DataStructures
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose() { _dictionary.Dispose(); }
-        
-        /// <summary>
-        /// this is necessary for Svelto.ECS otherwise it shouldn't be here at all
-        /// </summary>
-        /// <param name="dic"></param>
-        public void UnsafeCast 
-        (SveltoDictionary<TKey, TValue, NativeStrategy<SveltoDictionaryNode<TKey>>, NativeStrategy<TValue>,
-             NativeStrategy<int>> dic)
-        {
-            _dictionary = dic;
-        }
 
         SveltoDictionary<TKey, TValue, NativeStrategy<SveltoDictionaryNode<TKey>>, NativeStrategy<TValue>,
             NativeStrategy<int>> _dictionary;

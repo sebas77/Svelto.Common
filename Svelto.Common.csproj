@@ -4,11 +4,14 @@
         <LangVersion>8</LangVersion>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <TargetFramework>netstandard2.0</TargetFramework>
+        <PackageVersion>3.2.0</PackageVersion>
+        <AssemblyVersion>3.2.0</AssemblyVersion>
+        <Company>Svelto</Company>
     </PropertyGroup>
 
     <PropertyGroup>
         <PackageId>Svelto.Common</PackageId>
-        <Authors>sebas77</Authors>
+        <Authors>Sebastiano Mandala</Authors>
     </PropertyGroup>
     
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">

@@ -135,7 +135,7 @@ namespace Svelto.DataStructures
 
         Allocator _nativeAllocator;
         NB<T>     _realBuffer;
-#if UNITY_COLLECTIONS
+#if UNITY_COLLECTIONS || UNITY_JOBS || UNITY_BURST
         [Unity.Collections.LowLevel.Unsafe.NativeDisableUnsafePtrRestriction]
 #endif
         GCHandle _buffer;

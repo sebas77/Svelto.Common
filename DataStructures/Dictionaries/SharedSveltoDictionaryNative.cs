@@ -174,7 +174,7 @@ namespace Svelto.DataStructures
             }
         }
 
-#if UNITY_COLLECTIONS
+#if UNITY_COLLECTIONS || UNITY_JOBS || UNITY_BURST
         [Unity.Collections.LowLevel.Unsafe.NativeDisableUnsafePtrRestriction]
 #endif
         IntPtr _sharedDictionary;
