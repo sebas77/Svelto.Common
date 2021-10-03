@@ -1,34 +1,19 @@
 using System;
 using System.Runtime.CompilerServices;
-using Svelto.Common;
 
 namespace Svelto.DataStructures
 {
-    /// <summary>
-    /// This dictionary has been created for just one reason: I needed a dictionary that would have let me iterate
-    /// over the values as an array, directly, without generating one or using an iterator.
-    /// For this goal is N times faster than the standard dictionary. Faster dictionary is also faster than
-    /// the standard dictionary for most of the operations, but the difference is negligible. The only slower operation
-    /// is resizing the memory on add, as this implementation needs to use two separate arrays compared to the standard
-    /// one
-    /// note: use native memory? Use _valuesInfo only when there are collisions?
-    /// </summary>
-    /// <typeparam name="TKey"></typeparam>
-    /// <typeparam name="TValue"></typeparam>
-    public struct ReadonlySveltoDictionaryNative<TKey, TValue>
+    public readonly ref struct LocalReadonlySveltoDictionaryNative<TKey, TValue>
         where TKey : unmanaged, IEquatable<TKey> where TValue : unmanaged
     {
-        public ReadonlySveltoDictionaryNative(uint size) : this(size, Allocator.Persistent) { }
-
-        public ReadonlySveltoDictionaryNative(uint size, Allocator nativeAllocator)
+        public static implicit operator LocalReadonlySveltoDictionaryNative<TKey, TValue>
+        (in SveltoDictionary<TKey, TValue, NativeStrategy<SveltoDictionaryNode<TKey>>, NativeStrategy<TValue>,
+             NativeStrategy<int>> dic)
         {
-            _dictionary =
-                new SveltoDictionary<TKey, TValue, NativeStrategy<SveltoDictionaryNode<TKey>>, NativeStrategy<TValue>,
-                    NativeStrategy<int>>(size, nativeAllocator);
+            return new LocalReadonlySveltoDictionaryNative<TKey, TValue>(dic);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal ReadonlySveltoDictionaryNative
+        LocalReadonlySveltoDictionaryNative
         (SveltoDictionary<TKey, TValue, NativeStrategy<SveltoDictionaryNode<TKey>>, NativeStrategy<TValue>,
              NativeStrategy<int>> dic)
         {
