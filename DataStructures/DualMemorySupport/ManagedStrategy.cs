@@ -26,7 +26,7 @@ namespace Svelto.DataStructures
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void IBufferStrategy<T>.Alloc(uint size, Allocator allocator, bool clear = true)
+        void IBufferStrategy<T>.Alloc(uint size, Allocator allocator, bool clear)
         {
             var b =  default(MB<T>);
             b.Set(new T[size]);
