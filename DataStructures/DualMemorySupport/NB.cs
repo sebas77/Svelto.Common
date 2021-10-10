@@ -128,7 +128,7 @@ namespace Svelto.DataStructures
         readonly uint _capacity;
 
         //todo can I remove this from here? it should be used outside
-#if UNITY_COLLECTIONS || UNITY_JOBS        
+#if UNITY_COLLECTIONS || UNITY_JOBS || UNITY_BURST    
 #if UNITY_BURST
         [Unity.Burst.NoAlias]
 #endif

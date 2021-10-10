@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
 
-namespace Svelto.DataStructures
+namespace Svelto.DataStructures.Native
 {
     public readonly ref struct LocalReadonlySveltoDictionaryNative<TKey, TValue>
         where TKey : unmanaged, IEquatable<TKey> where TValue : unmanaged
