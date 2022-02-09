@@ -2,7 +2,7 @@
 Shared code between the Svelto repositories
 
 For Unity Users: to solve the unsafe dependency you need to add the following scopedRegistries in manifest.json:
-
+```
   "scopedRegistries": [
     {
       "name": "OpenUPM",
@@ -19,3 +19,4 @@ For Unity Users: to solve the unsafe dependency you need to add the following sc
       ]
     }
   ]
+```
