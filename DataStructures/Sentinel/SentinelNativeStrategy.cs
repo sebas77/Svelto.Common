@@ -1,29 +1,30 @@
-using System;
+﻿using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Svelto.Common;
+using Svelto.DataStructures;
 
-namespace Svelto.DataStructures.Native
+namespace Svelto.Common.DataStructures
 {
     /// <summary>
-    /// They are called strategy because they abstract the handling of the memory type used.
-    /// Through the IBufferStrategy interface, external datastructure can use interchangeably native and managed memory. 
+    /// internal structure just for the sake of creating the sentinel dictionary
     /// </summary>
-    public struct NativeStrategy<T> : IBufferStrategy<T> where T : struct
+    /// <typeparam name="T"></typeparam>
+    public struct SentinelNativeStrategy<T> : IBufferStrategy<T> where T : struct
     {
 #if DEBUG && !PROFILE_SVELTO
-        static NativeStrategy()
+        static SentinelNativeStrategy()
         {
             if (TypeType.isUnmanaged<T>() == false)
                 throw new DBC.Common.PreconditionException("Only unmanaged data can be stored natively");
         }
 #endif
-        public NativeStrategy(uint size, Allocator allocator, bool clear = true) : this()
+        public SentinelNativeStrategy(uint size, Allocator allocator, bool clear = true) : this()
         {
             Alloc(size, allocator, clear);
         }
 
         public int       capacity           => _realBuffer.capacity;
+        public Allocator allocationStrategy => _nativeAllocator;
 
         public void Alloc(uint newCapacity, Allocator allocator, bool clear)
         {
@@ -33,8 +34,8 @@ namespace Svelto.DataStructures.Native
 #endif
             _nativeAllocator = allocator;
 
-            IntPtr   realBuffer = MemoryUtilities.Alloc<T>(newCapacity, _nativeAllocator, clear);
-            NB<T> b          = new NB<T>(realBuffer, newCapacity);
+            IntPtr        realBuffer = MemoryUtilities.Alloc<T>(newCapacity, _nativeAllocator, clear);
+            SentinelNB<T> b          = new SentinelNB<T>(realBuffer, newCapacity);
             _invalidHandle = true;
             _realBuffer    = b;
         }
@@ -44,10 +45,9 @@ namespace Svelto.DataStructures.Native
             if (newSize != capacity)
             {
                 IntPtr pointer = _realBuffer.ToNativeArray(out _);
-                pointer = MemoryUtilities.Realloc<T>(pointer, newSize, _nativeAllocator
-                                                   , newSize > capacity ? (uint) capacity : newSize
-                                                   , copyContent);
-                NB<T> b = new NB<T>(pointer, newSize);
+                pointer = MemoryUtilities.Realloc<T>(pointer, newSize, _nativeAllocator,
+                    newSize > capacity ? (uint)capacity : newSize, copyContent);
+                SentinelNB<T> b = new SentinelNB<T>(pointer, newSize);
                 _realBuffer    = b;
                 _invalidHandle = true;
             }
@@ -58,7 +58,7 @@ namespace Svelto.DataStructures.Native
             throw new NotImplementedException();
         }
 
-        public void   SerialiseFrom(IntPtr bytesPointer)
+        public void SerialiseFrom(IntPtr bytesPointer)
         {
             throw new NotImplementedException();
         }
@@ -116,38 +116,36 @@ namespace Svelto.DataStructures.Native
         /// valid
         /// </summary>
         /// <returns></returns>
-#if UNITY_BURST 
-        [Unity.Burst.BurstDiscard]
-#endif        
         IBuffer<T> IBufferStrategy<T>.ToBuffer()
         {
             //handle has been invalidated, dispose of the hold GCHandle (if exists)
-            if (_invalidHandle == true && ((IntPtr) _cachedReference != IntPtr.Zero))
+            if (_invalidHandle == true && ((IntPtr)_cachedReference != IntPtr.Zero))
             {
                 _cachedReference.Free();
                 _cachedReference = default;
             }
 
             _invalidHandle = false;
-            if (((IntPtr) _cachedReference == IntPtr.Zero))
+            if (((IntPtr)_cachedReference == IntPtr.Zero))
             {
                 _cachedReference = GCHandle.Alloc(_realBuffer, GCHandleType.Normal);
             }
 
-            return (IBuffer<T>) _cachedReference.Target;
+            return (IBuffer<T>)_cachedReference.Target;
         }
 
-        public NB<T> ToRealBuffer()
+        public SentinelNB<T> ToRealBuffer()
         {
             return _realBuffer;
         }
 
         public void Dispose()
         {
-            ReleaseCachedReference();
+            if ((IntPtr)_cachedReference != IntPtr.Zero)
+                _cachedReference.Free();
 
             if (_realBuffer.ToNativeArray(out _) != IntPtr.Zero)
-                MemoryUtilities.Free(_realBuffer.ToNativeArray(out _), _nativeAllocator);
+                MemoryUtilities.Free(_realBuffer.ToNativeArray(out _), Allocator.Persistent);
             else
                 throw new Exception("trying to dispose disposed buffer");
 
@@ -155,18 +153,9 @@ namespace Svelto.DataStructures.Native
             _realBuffer      = default;
         }
 
-#if UNITY_BURST 
-        [Unity.Burst.BurstDiscard]
-#endif        
-        void ReleaseCachedReference()
-        {
-            if ((IntPtr)_cachedReference != IntPtr.Zero)
-                _cachedReference.Free();
-        }
-
-        Allocator _nativeAllocator;
-        NB<T>      _realBuffer;
-        bool       _invalidHandle;
+        Allocator     _nativeAllocator;
+        SentinelNB<T> _realBuffer;
+        bool          _invalidHandle;
 
 #if UNITY_COLLECTIONS || UNITY_JOBS || UNITY_BURST
         [Unity.Collections.LowLevel.Unsafe.NativeDisableUnsafePtrRestriction]
