@@ -49,7 +49,7 @@ namespace Svelto.DataStructures
     /// <typeparam name="T"></typeparam>
     
     [DebuggerTypeProxy(typeof(NBDebugProxy<>))]
-    public struct NB<T>:IBuffer<T> where T:struct
+    public struct NB<T>:IBuffer<T>, INativeBuffer where T:struct
     {
         /// <summary>
         /// Note: static constructors are NOT compiled by burst as long as there are no static fields in the struct

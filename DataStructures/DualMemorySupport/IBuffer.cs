@@ -1,7 +1,14 @@
+using System;
+
 namespace Svelto.DataStructures
 {
     public interface IBufferBase
     {
+    }
+
+    public interface INativeBuffer
+    {
+        public IntPtr ToNativeArray(out int capacity);
     }
 
     public interface IBuffer<T>:IBufferBase
