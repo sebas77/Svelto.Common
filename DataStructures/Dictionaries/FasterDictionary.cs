@@ -110,9 +110,9 @@ namespace Svelto.DataStructures
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void FastClear()
+        public void Recycle()
         {
-            _dictionary.FastClear();
+            _dictionary.Recycle();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

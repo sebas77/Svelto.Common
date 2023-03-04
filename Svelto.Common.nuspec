@@ -11,12 +11,10 @@
         <dependencies>
             <group targetFramework="netstandard2.0" />
         </dependencies>
-        <readme>docs/README.md</readme>
     </metadata>
     <files>
         <file src="Svelto.Common.targets" target="build/" />
         <file src="temp/bin/debug/Svelto.Common.dll" target="lib/Debug/netstandard2.0/" />
         <file src="temp/bin/release/Svelto.Common.dll" target="lib/Release/netstandard2.0/" />
-        <file src="README.md" target="docs/" />
     </files>
 </package>
