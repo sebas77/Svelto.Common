@@ -622,7 +622,7 @@ namespace Svelto.DataStructures
             {
                 ResizeIfNeeded();
                 //create the info node at the last position and fill it with the relevant information
-                _valuesInfo[_freeValueCellIndex] = new SveltoDictionaryNode<TKey>(ref key, hash);
+                _valuesInfo[_freeValueCellIndex] = new SveltoDictionaryNode<TKey>(key, hash);
             }
             else //collision or already exists
             {
@@ -649,7 +649,7 @@ namespace Svelto.DataStructures
                 _collisions++;
                 //create a new node which previous index points to node currently pointed in the bucket (valueIndex)
                 //_freeValueCellIndex = valueIndex + 1
-                _valuesInfo[_freeValueCellIndex] = new SveltoDictionaryNode<TKey>(ref key, hash, valueIndex);
+                _valuesInfo[_freeValueCellIndex] = new SveltoDictionaryNode<TKey>(key, hash, valueIndex);
                 //Important: the new node is always the one that will be pointed by the bucket cell
                 //so I can assume that the one pointed by the bucket is always the last value added
             }
