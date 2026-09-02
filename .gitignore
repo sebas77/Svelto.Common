@@ -1,6 +1,14 @@
-/*.meta
+# Unity metadata is generated locally.
 *.meta
-netstandard2.0
-obj
+
 .idea/
-Svelto.Common.sdpkg.user
+*.DotSettings.user
+
+# .NET build output.
+**/bin/
+**/obj/
+**/bin~/
+**/obj~/
+
+TestResults/
+test_results.txt
