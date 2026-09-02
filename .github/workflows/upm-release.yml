@@ -36,6 +36,12 @@ jobs:
             ./ "$PACKAGE_DIR/"
           test -f "$PACKAGE_DIR/package.json"
 
+      # Source repositories ignore Unity .meta files; the UPM branch commits stable UUIDv3 metadata.
+      - name: generate deterministic Unity metadata
+        uses: ./.github/actions/generate-unity-meta
+        with:
+          package-directory: ${{ runner.temp }}/svelto-common-upm
+
       - name: publish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
