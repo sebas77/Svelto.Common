@@ -22,9 +22,9 @@ guid: {guid}
 folderAsset: yes
 DefaultImporter:
   externalObjects: {{}}
-  userData: 
-  assetBundleName: 
-  assetBundleVariant: 
+  userData:\x20
+  assetBundleName:\x20
+  assetBundleVariant:\x20
 """
 
 MONO_META = """fileFormatVersion: 2
@@ -35,36 +35,36 @@ MonoImporter:
   defaultReferences: []
   executionOrder: 0
   icon: {{instanceID: 0}}
-  userData: 
-  assetBundleName: 
-  assetBundleVariant: 
+  userData:\x20
+  assetBundleName:\x20
+  assetBundleVariant:\x20
 """
 
 TEXT_META = """fileFormatVersion: 2
 guid: {guid}
 TextScriptImporter:
   externalObjects: {{}}
-  userData: 
-  assetBundleName: 
-  assetBundleVariant: 
+  userData:\x20
+  assetBundleName:\x20
+  assetBundleVariant:\x20
 """
 
 ASMDEF_META = """fileFormatVersion: 2
 guid: {guid}
 AssemblyDefinitionImporter:
   externalObjects: {{}}
-  userData: 
-  assetBundleName: 
-  assetBundleVariant: 
+  userData:\x20
+  assetBundleName:\x20
+  assetBundleVariant:\x20
 """
 
 DEFAULT_META = """fileFormatVersion: 2
 guid: {guid}
 DefaultImporter:
   externalObjects: {{}}
-  userData: 
-  assetBundleName: 
-  assetBundleVariant: 
+  userData:\x20
+  assetBundleName:\x20
+  assetBundleVariant:\x20
 """
 
 IGNORED_PATHS = (

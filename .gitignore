@@ -10,5 +10,8 @@
 **/bin~/
 **/obj~/
 
+# Python bytecode caches.
+__pycache__/
+
 TestResults/
 test_results.txt
