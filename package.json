@@ -9,7 +9,7 @@
     "svelto"
   ],
   "name": "com.sebaslab.svelto.common",
-  "version": "3.5.2",
+  "version": "3.7.1",
   "type": "library",
   "unity": "2021.3"
 }
